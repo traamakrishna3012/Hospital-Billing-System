@@ -30,7 +30,6 @@ python-dateutil==2.9.0
 loguru==0.7.3
 
 # CORS
-starlette==0.45.3
 
 # File handling
 aiofiles==24.1.0
