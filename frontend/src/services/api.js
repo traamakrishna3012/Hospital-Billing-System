@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? '/api/v1' : 'https://hospital-billing-system-pccq.onrender.com/api/v1'),
   headers: { 'Content-Type': 'application/json' },
 });
 
