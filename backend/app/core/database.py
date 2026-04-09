@@ -33,15 +33,17 @@ convention = {
 
 metadata = MetaData(naming_convention=convention)
 
-# Async engine with production-grade connection pooling
+from sqlalchemy import pool
+
+# Async engine configured for Supabase Transaction Pooler (PgBouncer)
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.APP_DEBUG and not settings.is_production,
-    pool_size=20,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800,
-    pool_pre_ping=True,
+    poolclass=pool.NullPool,
+    connect_args={
+        "prepared_statement_cache_size": 0,
+        "statement_cache_size": 0,
+    }
 )
 
 # Session factory
