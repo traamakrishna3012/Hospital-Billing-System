@@ -22,9 +22,14 @@ const adminItems = [
   { to: '/settings', icon: Settings, label: 'Clinic Settings' },
 ];
 
+const superadminItems = [
+  { to: '/super/dashboard', icon: LayoutDashboard, label: 'Platform Stats' },
+  { to: '/super/tenants', icon: Building2, label: 'Manage Clinics' },
+];
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout, isAdmin } = useAuthStore();
+  const { user, logout, isAdmin, isSuperAdmin } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -38,6 +43,29 @@ export default function Sidebar() {
         ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25'
         : 'text-surface-500 hover:bg-surface-100 hover:text-surface-800'
     }`;
+
+  const renderNavItems = (items) => items.map((item) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      className={({ isActive }) => linkClasses(isActive)}
+      title={collapsed ? item.label : undefined}
+    >
+      <item.icon className="w-5 h-5 flex-shrink-0" />
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="whitespace-nowrap"
+          >
+            {item.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </NavLink>
+  ));
 
   return (
     <motion.aside
@@ -58,8 +86,12 @@ export default function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               className="overflow-hidden"
             >
-              <h1 className="text-base font-bold text-surface-800 whitespace-nowrap">Hospital Billing</h1>
-              <p className="text-xs text-surface-400 whitespace-nowrap">Management System</p>
+              <h1 className="text-base font-bold text-surface-800 whitespace-nowrap">
+                {isSuperAdmin() ? 'SaaS Platform' : 'Hospital Billing'}
+              </h1>
+              <p className="text-xs text-surface-400 whitespace-nowrap">
+                {isSuperAdmin() ? 'Super Admin Console' : 'Management System'}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -67,63 +99,34 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {!collapsed && (
-          <p className="px-4 text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">
-            Main Menu
-          </p>
-        )}
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) => linkClasses(isActive)}
-            title={collapsed ? item.label : undefined}
-          >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="whitespace-nowrap"
-                >
-                  {item.label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </NavLink>
-        ))}
-
-        {isAdmin() && (
+        {isSuperAdmin() ? (
           <>
             {!collapsed && (
-              <p className="px-4 pt-5 text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">
-                Administration
+              <p className="px-4 text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">
+                Platform Management
               </p>
             )}
-            {adminItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => linkClasses(isActive)}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="whitespace-nowrap"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </NavLink>
-            ))}
+            {renderNavItems(superadminItems)}
+          </>
+        ) : (
+          <>
+            {!collapsed && (
+              <p className="px-4 text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">
+                Main Menu
+              </p>
+            )}
+            {renderNavItems(navItems)}
+
+            {isAdmin() && (
+              <>
+                {!collapsed && (
+                  <p className="px-4 pt-5 text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">
+                    Administration
+                  </p>
+                )}
+                {renderNavItems(adminItems)}
+              </>
+            )}
           </>
         )}
       </nav>
@@ -134,7 +137,9 @@ export default function Sidebar() {
           <div className="px-3 py-2">
             <p className="text-sm font-medium text-surface-800 truncate">{user.full_name}</p>
             <p className="text-xs text-surface-400 truncate">{user.email}</p>
-            <span className="inline-block mt-1 badge-info text-[10px]">{user.role}</span>
+            <span className="inline-block mt-1 badge-info text-[10px] uppercase font-bold tracking-wider">
+              {user.role}
+            </span>
           </div>
         )}
         <button

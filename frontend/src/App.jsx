@@ -12,15 +12,29 @@ import BillingPage from './pages/BillingPage';
 import SettingsPage from './pages/SettingsPage';
 import StaffPage from './pages/StaffPage';
 import ReportsPage from './pages/ReportsPage';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import SuperAdminTenantsPage from './pages/SuperAdminTenantsPage';
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
+function SuperAdminRoute({ children }) {
+  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isSuperAdmin()) return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 function PublicRoute({ children }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  if (isAuthenticated) {
+    return isSuperAdmin() 
+      ? <Navigate to="/super/dashboard" replace /> 
+      : <Navigate to="/dashboard" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -43,7 +57,7 @@ export default function App() {
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-        {/* Protected Routes */}
+        {/* Protected Clinic Routes */}
         <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
@@ -54,6 +68,10 @@ export default function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="staff" element={<StaffPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          
+          {/* Super Admin Section (Inside same layout but with SuperAdminRoute wrapper) */}
+          <Route path="super/dashboard" element={<SuperAdminRoute><SuperAdminDashboard /></SuperAdminRoute>} />
+          <Route path="super/tenants" element={<SuperAdminRoute><SuperAdminTenantsPage /></SuperAdminRoute>} />
         </Route>
 
         {/* Catch-all */}

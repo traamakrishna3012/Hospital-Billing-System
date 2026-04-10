@@ -35,7 +35,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(
     user_id: UUID,
-    tenant_id: UUID,
+    tenant_id: UUID | None,
     role: str,
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
@@ -45,30 +45,32 @@ def create_access_token(
 
     payload = {
         "sub": str(user_id),
-        "tenant_id": str(tenant_id),
         "role": role,
         "type": "access",
         "iat": now,
         "exp": expire,
     }
+    if tenant_id is not None:
+        payload["tenant_id"] = str(tenant_id)
     if extra_claims:
         payload.update(extra_claims)
 
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: UUID, tenant_id: UUID) -> str:
+def create_refresh_token(user_id: UUID, tenant_id: UUID | None) -> str:
     """Create a JWT refresh token with extended expiry."""
     now = datetime.now(timezone.utc)
     expire = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     payload = {
         "sub": str(user_id),
-        "tenant_id": str(tenant_id),
         "type": "refresh",
         "iat": now,
         "exp": expire,
     }
+    if tenant_id is not None:
+        payload["tenant_id"] = str(tenant_id)
 
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

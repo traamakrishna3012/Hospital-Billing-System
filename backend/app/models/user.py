@@ -19,10 +19,11 @@ class User(Base):
     __tablename__ = "users"
 
     # ── Tenant Isolation ──────────────────────────────────────
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
+    # nullable=True for superadmin users who operate at platform level
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
 
@@ -35,7 +36,7 @@ class User(Base):
     # ── Role & Status ─────────────────────────────────────────
     role: Mapped[str] = mapped_column(
         String(20), default="staff", server_default="staff"
-    )  # admin | staff
+    )  # superadmin | admin | staff
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
     # ── Relationships ─────────────────────────────────────────

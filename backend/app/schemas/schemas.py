@@ -57,7 +57,7 @@ class RefreshRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: UUID
-    tenant_id: UUID
+    tenant_id: Optional[UUID] = None
     email: str
     full_name: str
     phone: Optional[str] = None
@@ -375,6 +375,47 @@ class PaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+# ═══════════════════════════════════════════════════════════════
+# Super Admin Schemas
+# ═══════════════════════════════════════════════════════════════
+
+class PlatformStatsResponse(BaseModel):
+    """Platform-wide analytics for superadmin dashboard."""
+    total_tenants: int
+    active_tenants: int
+    total_users: int
+    total_patients: int
+    total_doctors: int
+    total_bills: int
+    total_revenue: float
+
+
+class TenantDetailResponse(BaseModel):
+    """Extended tenant info for superadmin management."""
+    id: UUID
+    name: str
+    slug: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    subscription_plan: str
+    is_active: bool
+    created_at: datetime
+    user_count: int = 0
+    patient_count: int = 0
+    doctor_count: int = 0
+    bill_count: int = 0
+    total_revenue: float = 0.0
+
+
+class TenantAdminUpdateRequest(BaseModel):
+    """Superadmin updating a tenant's details."""
+    is_active: Optional[bool] = None
+    subscription_plan: Optional[str] = Field(None, pattern="^(free|basic|premium|enterprise)$")
 
 
 # Resolve forward references

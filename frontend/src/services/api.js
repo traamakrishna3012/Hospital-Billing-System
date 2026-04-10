@@ -128,4 +128,15 @@ export const reportAPI = {
   exportCSV: (params) => api.get('/reports/export/csv', { params, responseType: 'blob' }),
 };
 
+// ── Super Admin API ──────────────────────────────────────────
+
+export const superadminAPI = {
+  getStats: () => api.get('/superadmin/stats'),
+  listTenants: (params) => api.get('/superadmin/tenants', { params }),
+  getTenant: (id) => api.get(`/superadmin/tenants/${id}`),
+  updateTenant: (id, data) => api.patch(`/superadmin/tenants/${id}`, data),
+  deactivateTenant: (id) => api.delete(`/superadmin/tenants/${id}`),
+  listAllUsers: (params) => api.get('/superadmin/users', { params }),
+};
+
 export default api;

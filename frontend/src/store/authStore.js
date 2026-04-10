@@ -31,6 +31,7 @@ export const useAuthStore = create(
         }),
 
       isAdmin: () => get().user?.role === 'admin',
+      isSuperAdmin: () => get().user?.role === 'superadmin',
     }),
     {
       name: 'hbs-auth',

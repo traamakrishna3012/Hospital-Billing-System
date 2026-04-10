@@ -104,6 +104,7 @@ from app.api.v1.clinic import router as clinic_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.users import router as users_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.superadmin import router as superadmin_router
 
 API_PREFIX = "/api/v1"
 
@@ -116,6 +117,7 @@ app.include_router(clinic_router, prefix=API_PREFIX)
 app.include_router(dashboard_router, prefix=API_PREFIX)
 app.include_router(users_router, prefix=API_PREFIX)
 app.include_router(reports_router, prefix=API_PREFIX)
+app.include_router(superadmin_router, prefix=API_PREFIX)
 
 
 # ── Health Check ──────────────────────────────────────────────

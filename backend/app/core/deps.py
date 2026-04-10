@@ -82,8 +82,18 @@ def require_role(*roles: str):
     return _check_role
 
 
+def require_superadmin():
+    """Dependency: restrict access to superadmin users only."""
+    return require_role("superadmin")
+
+
 def get_tenant_id(current_user: CurrentUser) -> UUID:
     """Extract tenant_id from the current user — single source of truth."""
+    if current_user.tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Superadmin users are not scoped to a tenant. Use superadmin endpoints.",
+        )
     return current_user.tenant_id
 
 
