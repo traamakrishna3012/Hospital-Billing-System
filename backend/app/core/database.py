@@ -35,15 +35,15 @@ metadata = MetaData(naming_convention=convention)
 
 from sqlalchemy import pool
 
-# Async engine configured for Supabase Transaction Pooler (PgBouncer)
+# Async engine
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.APP_DEBUG and not settings.is_production,
-    poolclass=pool.NullPool,
-    connect_args={
-        "prepared_statement_cache_size": 0,
-        "statement_cache_size": 0,
-    }
+    pool_size=20,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_recycle=1800,
+    pool_pre_ping=True,
 )
 
 # Session factory
