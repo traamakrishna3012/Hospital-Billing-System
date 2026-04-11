@@ -41,7 +41,7 @@ export default function SuperAdminTenantsPage() {
 
   const filteredTenants = tenants.filter(t => 
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.email.toLowerCase().includes(searchTerm.toLowerCase()) or
+    t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
