@@ -131,6 +131,12 @@ def generate_receipt_pdf(
     # Clinic name
     elements.append(Paragraph(tenant_data.get("name", "Clinic"), styles["ClinicName"]))
 
+    # Biller Header (Customization)
+    biller_header = tenant_data.get("biller_header")
+    if biller_header:
+        elements.append(Paragraph(biller_header, styles["ClinicInfo"]))
+        elements.append(Spacer(1, 2 * mm))
+
     # Address & Contact
     address_parts = []
     if tenant_data.get("address"):

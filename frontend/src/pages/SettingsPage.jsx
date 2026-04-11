@@ -23,6 +23,7 @@ export default function SettingsPage() {
         name: data.name || '', email: data.email || '', phone: data.phone || '',
         address: data.address || '', city: data.city || '', state: data.state || '',
         pincode: data.pincode || '', website: data.website || '', tagline: data.tagline || '',
+        biller_header: data.biller_header || '',
         tax_percent: String(data.tax_percent || 18), currency: data.currency || 'INR',
       });
     } catch (err) {
@@ -128,6 +129,12 @@ export default function SettingsPage() {
           <div>
             <label className="label-text">Tagline (shown on receipts)</label>
             <input value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} className="input-field" placeholder="e.g., Caring for your health since 1990" />
+          </div>
+
+          <div>
+            <label className="label-text">Biller Header (Full address/GST details for Invoice)</label>
+            <textarea value={form.biller_header} onChange={(e) => setForm({ ...form, biller_header: e.target.value })} className="input-field resize-none" rows={3} placeholder="Enter full clinic name, address, GSTIN, and License info to show on bills" />
+            <p className="text-[10px] text-surface-400 mt-1">This will be printed prominently on the bill header.</p>
           </div>
 
           <h3 className="text-md font-semibold text-surface-800 pt-4">Billing Defaults</h3>

@@ -188,6 +188,13 @@ export default function BillingPage() {
     }
   };
 
+  const [patientSearch, setPatientSearch] = useState('');
+
+  const filteredPatientOptions = patients.filter(p => 
+    p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+    p.phone.includes(patientSearch)
+  );
+
   const subtotal = calcSubtotal();
   const discountAmt = subtotal * (parseFloat(billForm.discount_percent) || 0) / 100;
   const afterDiscount = subtotal - discountAmt;
@@ -271,12 +278,27 @@ export default function BillingPage() {
       <Modal isOpen={createModal} onClose={() => setCreateModal(false)} title="Create New Bill" size="xl">
         <form onSubmit={handleCreateBill} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label-text">Patient *</label>
-              <select required value={billForm.patient_id} onChange={(e) => setBillForm({ ...billForm, patient_id: e.target.value })} className="input-field">
-                <option value="">Select Patient</option>
-                {patients.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.phone}</option>)}
-              </select>
+            <div className="space-y-1">
+              <label className="label-text">Find Patient *</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Search by name or phone..." 
+                  value={patientSearch}
+                  onChange={(e) => setPatientSearch(e.target.value)}
+                  className="input-field mb-2"
+                />
+                <select 
+                  required 
+                  value={billForm.patient_id} 
+                  onChange={(e) => setBillForm({ ...billForm, patient_id: e.target.value })} 
+                  className="input-field"
+                >
+                  <option value="">{filteredPatientOptions.length === 0 ? 'No patients found' : 'Select Patient Profile'}</option>
+                  {filteredPatientOptions.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.phone}</option>)}
+                </select>
+              </div>
+              <p className="text-[10px] text-surface-400">Reusing profiles saves time and keeps medical history linked.</p>
             </div>
             <div>
               <label className="label-text">Doctor</label>

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Building2, Search, Filter, MoreVertical, 
   CheckCircle2, XCircle, ArrowUpRight, ExternalLink,
-  ShieldAlert, Settings2
+  ShieldAlert, Settings2, Clock, ThumbsUp
 } from 'lucide-react';
 import { superadminAPI } from '../services/api';
 import { LoadingSpinner, StatusBadge } from '../components/UI';
@@ -39,6 +39,16 @@ export default function SuperAdminTenantsPage() {
     }
   };
 
+  const approveTenant = async (tenantId) => {
+    try {
+      await superadminAPI.updateTenant(tenantId, { is_approved: true });
+      setTenants(prev => prev.map(t => t.id === tenantId ? { ...t, is_approved: true } : t));
+      toast.success('Clinic approved successfully!');
+    } catch (err) {
+      toast.error('Failed to approve clinic');
+    }
+  };
+
   const filteredTenants = tenants.filter(t => 
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,7 +68,7 @@ export default function SuperAdminTenantsPage() {
       </div>
 
       {/* Filters */}
-      <div className="glass-card p-4 flex flex-col md:row items-center gap-4">
+      <div className="glass-card p-4 flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
           <input
@@ -83,6 +93,7 @@ export default function SuperAdminTenantsPage() {
               <tr className="bg-surface-50 border-b border-surface-100">
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Hospital / Clinic</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Plan</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Approval</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Stats</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Revenue</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Status</th>
@@ -99,7 +110,7 @@ export default function SuperAdminTenantsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-surface-800">{t.name}</p>
-                        <p className="text-xs text-surface-400">{t.email}</p>
+                        <p className="text-[10px] text-surface-400 font-mono bg-surface-100 px-1 rounded inline-block mt-0.5">{t.slug}</p>
                       </div>
                     </div>
                   </td>
@@ -109,6 +120,28 @@ export default function SuperAdminTenantsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
+                    {t.is_approved ? (
+                      <div className="flex items-center gap-1.5 text-blue-600">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="text-xs font-medium">Approved</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5 text-amber-600">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-xs font-medium">Pending</span>
+                        </div>
+                        <button 
+                          onClick={() => approveTenant(t.id)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-[10px] font-bold rounded-lg hover:bg-primary-700 transition-all shadow-sm shadow-primary-200"
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                          APPROVE
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="text-xs space-y-1">
                       <p><span className="text-surface-400">Users:</span> <span className="font-medium">{t.user_count}</span></p>
                       <p><span className="text-surface-400">Patients:</span> <span className="font-medium">{t.patient_count}</span></p>
@@ -116,7 +149,7 @@ export default function SuperAdminTenantsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-emerald-600">₹{t.total_revenue.toLocaleString()}</p>
-                    <p className="text-[10px] text-surface-400">{t.bill_count} bills generated</p>
+                    <p className="text-[10px] text-surface-400">{t.bill_count} bills</p>
                   </td>
                   <td className="px-6 py-4">
                     <button 
@@ -150,7 +183,7 @@ export default function SuperAdminTenantsPage() {
               ))}
               {filteredTenants.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-surface-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-surface-400">
                     No clinics found matching your search.
                   </td>
                 </tr>

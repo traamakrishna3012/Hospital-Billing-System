@@ -87,13 +87,34 @@ def require_superadmin():
     return require_role("superadmin")
 
 
-def get_tenant_id(current_user: CurrentUser) -> UUID:
-    """Extract tenant_id from the current user — single source of truth."""
+async def get_tenant_id(current_user: CurrentUser, db: DBSession) -> UUID:
+    """
+    Extract tenant_id from the current user and verify clinic approval.
+    Raises 403 if the clinic is pending approval.
+    """
     if current_user.tenant_id is None:
+        # Superadmins don't have a tenant_id
+        if current_user.role == "superadmin":
+            return None # Should be handled by dependencies in routers
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Superadmin users are not scoped to a tenant. Use superadmin endpoints.",
         )
+    
+    # Verify clinic approval status
+    result = await db.execute(select(Tenant).where(Tenant.id == current_user.tenant_id))
+    from app.models.tenant import Tenant
+    tenant = result.scalar_one_or_none()
+    
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant context not found")
+        
+    if not tenant.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your clinic account is pending approval by the Super Admin. Please contact support."
+        )
+
     return current_user.tenant_id
 
 

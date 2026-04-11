@@ -105,6 +105,8 @@ class TenantResponse(BaseModel):
     tax_percent: float
     currency: str
     is_active: bool
+    is_approved: bool
+    biller_header: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -122,6 +124,7 @@ class TenantUpdateRequest(BaseModel):
     tagline: Optional[str] = Field(None, max_length=500)
     tax_percent: Optional[float] = Field(None, ge=0, le=100)
     currency: Optional[str] = Field(None, max_length=5)
+    biller_header: Optional[str] = None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -404,6 +407,8 @@ class TenantDetailResponse(BaseModel):
     state: Optional[str] = None
     subscription_plan: str
     is_active: bool
+    is_approved: bool
+    biller_header: Optional[str] = None
     created_at: datetime
     user_count: int = 0
     patient_count: int = 0
@@ -415,6 +420,7 @@ class TenantDetailResponse(BaseModel):
 class TenantAdminUpdateRequest(BaseModel):
     """Superadmin updating a tenant's details."""
     is_active: Optional[bool] = None
+    is_approved: Optional[bool] = None
     subscription_plan: Optional[str] = Field(None, pattern="^(free|basic|premium|enterprise)$")
 
 

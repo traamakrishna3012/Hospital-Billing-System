@@ -37,12 +37,32 @@ async def lifespan(app: FastAPI):
 
     # Seed SuperAdmin if not exists
     try:
-        from sqlalchemy import select
+        from sqlalchemy import select, text
         from app.core.database import async_session_factory
         from app.models.user import User
         from app.core.security import hash_password
         
         async with async_session_factory() as db:
+            # 1. Manual Migration - Users: tenant_id nullable
+            try:
+                await db.execute(text("ALTER TABLE users ALTER COLUMN tenant_id DROP NOT NULL"))
+                await db.commit()
+                logger.info("Migration: users.tenant_id is now nullable")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (users.tenant_id) skipped: {e}")
+
+            # 2. Manual Migration - Tenants: is_approved, biller_header
+            try:
+                await db.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE"))
+                await db.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS biller_header TEXT"))
+                await db.commit()
+                logger.info("Migration: tenants table updated with is_approved and biller_header")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (tenants table) skipped: {e}")
+
+            # 3. Seed SuperAdmin
             result = await db.execute(
                 select(User).where(User.email == "superadmin@hospitalbilling.com")
             )
@@ -58,7 +78,7 @@ async def lifespan(app: FastAPI):
                 await db.commit()
                 logger.info("Successfully seeded superadmin in production DB.")
     except Exception as e:
-        logger.error(f"Failed to seed superadmin: {e}")
+        logger.error(f"Failed to seed or migrate during startup: {e}")
 
     yield
 

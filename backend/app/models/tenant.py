@@ -40,6 +40,10 @@ class Tenant(Base):
         DateTime(timezone=True), nullable=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+    # ── Customization ─────────────────────────────────────────
+    biller_header: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # ── Settings ──────────────────────────────────────────────
     tax_percent: Mapped[float] = mapped_column(default=18.0, server_default="18.0")
