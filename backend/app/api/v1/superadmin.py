@@ -176,9 +176,6 @@ async def get_tenant(tenant_id: UUID, db: DBSession):
         bill_count=bill_count,
         total_revenue=float(total_revenue),
     )
-        bill_count=bill_count,
-        total_revenue=float(total_revenue),
-    )
 
 
 @router.patch("/tenants/{tenant_id}", response_model=TenantResponse, summary="Update clinic")
