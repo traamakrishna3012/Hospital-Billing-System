@@ -92,7 +92,6 @@ export default function SuperAdminTenantsPage() {
             <thead>
               <tr className="bg-surface-50 border-b border-surface-100">
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Hospital / Clinic</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Plan</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Approval</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Stats</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Revenue</th>
@@ -113,11 +112,6 @@ export default function SuperAdminTenantsPage() {
                         <p className="text-[10px] text-surface-400 font-mono bg-surface-100 px-1 rounded inline-block mt-0.5">{t.slug}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700">
-                      {t.subscription_plan}
-                    </span>
                   </td>
                   <td className="px-6 py-4">
                     {t.is_approved ? (

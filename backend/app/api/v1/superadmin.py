@@ -199,6 +199,12 @@ async def update_tenant(tenant_id: UUID, data: TenantAdminUpdateRequest, db: DBS
             update(User).where(User.tenant_id == tenant_id).values(is_approved=update_data["is_approved"])
         )
 
+    if "is_active" in update_data:
+        from sqlalchemy import update
+        await db.execute(
+            update(User).where(User.tenant_id == tenant_id).values(is_active=update_data["is_active"])
+        )
+
     await db.commit()
     await db.refresh(tenant)
     return TenantResponse.model_validate(tenant)
@@ -213,6 +219,12 @@ async def deactivate_tenant(tenant_id: UUID, db: DBSession):
         raise HTTPException(status_code=404, detail="Tenant not found")
 
     tenant.is_active = False
+    
+    from sqlalchemy import update
+    await db.execute(
+        update(User).where(User.tenant_id == tenant_id).values(is_active=False)
+    )
+
     await db.commit()
     return {"detail": f"Clinic '{tenant.name}' has been deactivated"}
 
