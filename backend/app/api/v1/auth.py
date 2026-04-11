@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,7 +48,7 @@ def _slugify(name: str) -> str:
     status_code=status.HTTP_201_CREATED,
     summary="Register a new clinic",
 )
-async def register(data: RegisterRequest, db: DBSession):
+async def register(data: RegisterRequest, db: DBSession, background_tasks: BackgroundTasks):
     """
     Register a new clinic/hospital. Creates a tenant and an admin user.
     Returns JWT tokens for immediate authentication.
@@ -94,21 +94,18 @@ async def register(data: RegisterRequest, db: DBSession):
         password_hash=hash_password(data.admin_password),
         full_name=data.admin_name,
         role="admin",
+        is_approved=tenant.is_approved
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    await db.refresh(tenant)
 
     # Generate tokens
     access_token = create_access_token(user.id, tenant.id, user.role)
     refresh_token = create_refresh_token(user.id, tenant.id)
 
-    # Send welcome email (non-blocking)
-    try:
-        await send_welcome_email(tenant.name, user.full_name, user.email)
-    except Exception:
-        pass  # Don't fail registration if email fails
+    # Send welcome email (background task)
+    background_tasks.add_task(send_welcome_email, tenant.name, user.full_name, user.email)
 
     return TokenResponse(
         access_token=access_token,
@@ -124,8 +121,14 @@ async def login(data: LoginRequest, db: DBSession):
         select(User).where(User.email == data.email, User.is_active == True)  # noqa: E712
     )
     user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
 
-    if not user or not verify_password(data.password, user.password_hash):
+    if not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -152,6 +155,7 @@ async def refresh_token(data: RefreshRequest, db: DBSession):
         )
 
     user_id = UUID(payload["sub"])
+    
     result = await db.execute(
         select(User).where(User.id == user_id, User.is_active == True)  # noqa: E712
     )

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
 from app.core.security import decode_token
 from app.models.user import User
+from app.models.tenant import Tenant
 
 # Bearer token scheme
 bearer_scheme = HTTPBearer(auto_error=True)
@@ -29,7 +30,7 @@ async def get_current_user(
     db: DBSession,
 ) -> User:
     """
-    Validate the JWT token and return the authenticated user.
+    Validate the JWT token and return the authenticated user with approval status.
     Raises 401 if token is invalid or user not found.
     """
     credentials_exception = HTTPException(
@@ -51,7 +52,9 @@ async def get_current_user(
     except ValueError:
         raise credentials_exception
 
-    result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))  # noqa: E712
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.is_active == True)  # noqa: E712
+    )
     user = result.scalar_one_or_none()
 
     if user is None:
@@ -93,23 +96,16 @@ async def get_tenant_id(current_user: CurrentUser, db: DBSession) -> UUID:
     Raises 403 if the clinic is pending approval.
     """
     if current_user.tenant_id is None:
-        # Superadmins don't have a tenant_id
+        # Superadmins don't have a tenant_id but might use these endpoints if they act as a tenant
         if current_user.role == "superadmin":
-            return None # Should be handled by dependencies in routers
+            return None 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Superadmin users are not scoped to a tenant. Use superadmin endpoints.",
+            detail="User is not scoped to a clinic.",
         )
     
-    # Verify clinic approval status
-    result = await db.execute(select(Tenant).where(Tenant.id == current_user.tenant_id))
-    from app.models.tenant import Tenant
-    tenant = result.scalar_one_or_none()
-    
-    if not tenant:
-        raise HTTPException(status_code=404, detail="Tenant context not found")
-        
-    if not tenant.is_approved:
+    # Enforce clinic approval
+    if not current_user.is_approved:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your clinic account is pending approval by the Super Admin. Please contact support."

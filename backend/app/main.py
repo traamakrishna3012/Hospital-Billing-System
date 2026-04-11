@@ -43,14 +43,15 @@ async def lifespan(app: FastAPI):
         from app.core.security import hash_password
         
         async with async_session_factory() as db:
-            # 1. Manual Migration - Users: tenant_id nullable
+            # 1. Manual Migration - Users: tenant_id nullable, is_approved
             try:
                 await db.execute(text("ALTER TABLE users ALTER COLUMN tenant_id DROP NOT NULL"))
+                await db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE"))
                 await db.commit()
-                logger.info("Migration: users.tenant_id is now nullable")
+                logger.info("Migration: users updated (tenant_id nullable, is_approved added)")
             except Exception as e:
                 await db.rollback()
-                logger.warning(f"Migration (users.tenant_id) skipped: {e}")
+                logger.warning(f"Migration (users) skipped: {e}")
 
             # 2. Manual Migration - Tenants: is_approved, biller_header
             try:
@@ -73,7 +74,8 @@ async def lifespan(app: FastAPI):
                     full_name="System Super Admin",
                     role="superadmin",
                     tenant_id=None,
-                    is_active=True
+                    is_active=True,
+                    is_approved=True
                 ))
                 await db.commit()
                 logger.info("Successfully seeded superadmin in production DB.")
@@ -99,13 +101,17 @@ app = FastAPI(
 
 # ── Middleware ────────────────────────────────────────────────
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
 
 
 # ── Global Exception Handlers ────────────────────────────────

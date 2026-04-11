@@ -217,18 +217,29 @@ export default function DashboardPage() {
             </thead>
             <tbody className="divide-y divide-surface-100">
               {recent.length > 0 ? (
-                recent.map((txn) => (
-                  <tr key={txn.id} className="hover:bg-surface-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-primary-600">{txn.bill_number}</td>
-                    <td className="px-6 py-4 text-sm text-surface-700">{txn.patient_name}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-surface-800">{formatCurrency(txn.total)}</td>
-                    <td className="px-6 py-4"><StatusBadge status={txn.status} /></td>
-                    <td className="px-6 py-4 text-sm text-surface-500 uppercase">{txn.payment_mode}</td>
-                    <td className="px-6 py-4 text-sm text-surface-400">
-                      {txn.created_at ? format(new Date(txn.created_at), 'dd MMM yyyy') : '-'}
-                    </td>
-                  </tr>
-                ))
+                recent.map((txn) => {
+                  let formattedDate = '-';
+                  try {
+                    if (txn.created_at) {
+                      formattedDate = format(new Date(txn.created_at), 'dd MMM yyyy');
+                    }
+                  } catch (e) {
+                    console.error('Invalid date for bill:', txn.bill_number);
+                  }
+
+                  return (
+                    <tr key={txn.id} className="hover:bg-surface-50/50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-primary-600">{txn.bill_number || 'N/A'}</td>
+                      <td className="px-6 py-4 text-sm text-surface-700">{txn.patient_name || 'Guest/Deleted'}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-surface-800">
+                        {formatCurrency(txn.total || 0)}
+                      </td>
+                      <td className="px-6 py-4"><StatusBadge status={txn.status || 'unpaid'} /></td>
+                      <td className="px-6 py-4 text-sm text-surface-500 uppercase">{txn.payment_mode || 'cash'}</td>
+                      <td className="px-6 py-4 text-sm text-surface-400">{formattedDate}</td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-surface-400">

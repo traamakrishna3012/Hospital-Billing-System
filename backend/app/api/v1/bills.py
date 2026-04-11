@@ -286,6 +286,7 @@ async def email_bill_receipt(
     db: DBSession,
     tenant_id: TenantID,
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
 ):
     """Generate PDF and email receipt to the patient."""
     # Load bill
@@ -361,7 +362,8 @@ async def email_bill_receipt(
     )
 
     # Send email
-    success = await send_bill_receipt_email(
+    background_tasks.add_task(
+        send_bill_receipt_email,
         patient_email=bill.patient.email,
         patient_name=bill.patient.name,
         clinic_name=tenant.name,
@@ -371,10 +373,4 @@ async def email_bill_receipt(
         pdf_bytes=pdf_bytes,
     )
 
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send email. Check SMTP configuration.",
-        )
-
-    return {"message": "Receipt sent successfully", "email": bill.patient.email}
+    return {"message": "Receipt email has been queued for delivery", "email": bill.patient.email}

@@ -33,7 +33,8 @@ export default function RegisterPage() {
       const { data } = await authAPI.register(form);
       setAuth(data.user, data.access_token, data.refresh_token);
       toast.success('Clinic registered successfully!');
-      navigate('/dashboard');
+      // Redirection logic will be handled by the Route Guard in App.jsx but we'll push them to root/dashboard
+      navigate('/'); 
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Registration failed');
     } finally {
@@ -95,19 +96,19 @@ export default function RegisterPage() {
               <>
                 <div>
                   <label className="label-text">Clinic / Hospital Name *</label>
-                  <input required value={form.clinic_name} onChange={update('clinic_name')} className="input-field" placeholder="e.g., City Health Clinic" />
+                  <input id="clinic_name" name="clinic_name" required value={form.clinic_name} onChange={update('clinic_name')} className="input-field" placeholder="e.g., City Health Clinic" autoComplete="organization" />
                 </div>
                 <div>
                   <label className="label-text">Clinic Email *</label>
-                  <input type="email" required value={form.clinic_email} onChange={update('clinic_email')} className="input-field" placeholder="contact@clinic.com" />
+                  <input id="clinic_email" name="clinic_email" type="email" required value={form.clinic_email} onChange={update('clinic_email')} className="input-field" placeholder="contact@clinic.com" autoComplete="email" />
                 </div>
                 <div>
                   <label className="label-text">Phone Number</label>
-                  <input value={form.clinic_phone} onChange={update('clinic_phone')} className="input-field" placeholder="+91 98765 43210" />
+                  <input id="clinic_phone" name="clinic_phone" value={form.clinic_phone} onChange={update('clinic_phone')} className="input-field" placeholder="+91 98765 43210" autoComplete="tel" />
                 </div>
                 <div>
                   <label className="label-text">Address</label>
-                  <textarea value={form.clinic_address} onChange={update('clinic_address')} className="input-field resize-none" rows={2} placeholder="Full clinic address" />
+                  <textarea id="clinic_address" name="clinic_address" value={form.clinic_address} onChange={update('clinic_address')} className="input-field resize-none" rows={2} placeholder="Full clinic address" autoComplete="street-address" />
                 </div>
                 <button type="submit" className="btn-primary w-full py-3">Continue →</button>
               </>
@@ -115,16 +116,18 @@ export default function RegisterPage() {
               <>
                 <div>
                   <label className="label-text">Your Full Name *</label>
-                  <input required value={form.admin_name} onChange={update('admin_name')} className="input-field" placeholder="Dr. John Doe" />
+                  <input id="admin_name" name="admin_name" required value={form.admin_name} onChange={update('admin_name')} className="input-field" placeholder="Dr. John Doe" autoComplete="name" />
                 </div>
                 <div>
                   <label className="label-text">Admin Email *</label>
-                  <input type="email" required value={form.admin_email} onChange={update('admin_email')} className="input-field" placeholder="admin@clinic.com" />
+                  <input id="admin_email" name="admin_email" type="email" required value={form.admin_email} onChange={update('admin_email')} className="input-field" placeholder="admin@clinic.com" autoComplete="email" />
                 </div>
                 <div>
                   <label className="label-text">Password *</label>
                   <div className="relative">
                     <input
+                      id="admin_password"
+                      name="admin_password"
                       type={showPassword ? 'text' : 'password'}
                       required
                       minLength={8}
@@ -132,6 +135,7 @@ export default function RegisterPage() {
                       onChange={update('admin_password')}
                       className="input-field pr-12"
                       placeholder="Min 8 chars, 1 uppercase, 1 number"
+                      autoComplete="new-password"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400">
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

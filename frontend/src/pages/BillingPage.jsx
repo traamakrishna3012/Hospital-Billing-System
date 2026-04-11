@@ -402,12 +402,14 @@ export default function BillingPage() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-xs text-surface-400 mb-1">Patient</p>
-                <p className="font-semibold text-surface-800">{selectedBill.patient?.name}</p>
-                <p className="text-sm text-surface-500">{selectedBill.patient?.phone}</p>
+                <p className="font-semibold text-surface-800">{selectedBill.patient?.name || 'N/A'}</p>
+                <p className="text-sm text-surface-500">{selectedBill.patient?.phone || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-surface-400 mb-1">Doctor</p>
-                <p className="font-semibold text-surface-800">{selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'N/A'}</p>
+                <p className="font-semibold text-surface-800">
+                  {selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'N/A'}
+                </p>
               </div>
             </div>
 
@@ -424,12 +426,12 @@ export default function BillingPage() {
                 </thead>
                 <tbody className="divide-y divide-surface-100">
                   {selectedBill.items?.map((item, i) => (
-                    <tr key={item.id}>
+                    <tr key={item.id || i}>
                       <td className="px-4 py-2 text-sm text-surface-500">{i + 1}</td>
                       <td className="px-4 py-2 text-sm text-surface-800">{item.description}</td>
                       <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
-                      <td className="px-4 py-2 text-sm text-right">₹{Number(item.unit_price).toLocaleString()}</td>
-                      <td className="px-4 py-2 text-sm text-right font-medium">₹{Number(item.total).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-sm text-right">₹{Number(item.unit_price || 0).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-sm text-right font-medium">₹{Number(item.total || 0).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -437,13 +439,23 @@ export default function BillingPage() {
             </div>
 
             <div className="bg-surface-50 rounded-xl p-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span>Subtotal</span><span>₹{Number(selectedBill.subtotal).toLocaleString()}</span></div>
-              {selectedBill.discount_amount > 0 && (
-                <div className="flex justify-between text-emerald-600"><span>Discount ({selectedBill.discount_percent}%)</span><span>- ₹{Number(selectedBill.discount_amount).toLocaleString()}</span></div>
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>₹{Number(selectedBill.subtotal || 0).toLocaleString()}</span>
+              </div>
+              {Number(selectedBill.discount_amount) > 0 && (
+                <div className="flex justify-between text-emerald-600">
+                  <span>Discount ({selectedBill.discount_percent}%)</span>
+                  <span>- ₹{Number(selectedBill.discount_amount).toLocaleString()}</span>
+                </div>
               )}
-              <div className="flex justify-between"><span>GST ({selectedBill.tax_percent}%)</span><span>₹{Number(selectedBill.tax_amount).toLocaleString()}</span></div>
+              <div className="flex justify-between">
+                <span>GST ({selectedBill.tax_percent || 18}%)</span>
+                <span>₹{Number(selectedBill.tax_amount || 0).toLocaleString()}</span>
+              </div>
               <div className="flex justify-between pt-2 border-t border-surface-200 text-lg font-bold">
-                <span>Total</span><span className="text-primary-600">₹{Number(selectedBill.total).toLocaleString()}</span>
+                <span>Total</span>
+                <span className="text-primary-600">₹{Number(selectedBill.total || 0).toLocaleString()}</span>
               </div>
             </div>
 

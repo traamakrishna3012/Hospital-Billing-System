@@ -15,9 +15,22 @@ import ReportsPage from './pages/ReportsPage';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminTenantsPage from './pages/SuperAdminTenantsPage';
 
+import PendingApprovalPage from './pages/PendingApprovalPage';
+
 function ProtectedRoute({ children }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, user, isSuperAdmin } = useAuthStore();
+  
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  // Super Admins bypass approval check
+  if (isSuperAdmin()) return children;
+
+  // Scoped check for clinic approval
+  if (!user?.is_approved) {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  return children;
 }
 
 function SuperAdminRoute({ children }) {
@@ -28,11 +41,11 @@ function SuperAdminRoute({ children }) {
 }
 
 function PublicRoute({ children }) {
-  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  const { isAuthenticated, isSuperAdmin, user } = useAuthStore();
   if (isAuthenticated) {
-    return isSuperAdmin() 
-      ? <Navigate to="/super/dashboard" replace /> 
-      : <Navigate to="/dashboard" replace />;
+    if (isSuperAdmin()) return <Navigate to="/super/dashboard" replace />;
+    if (user?.is_approved === false) return <Navigate to="/pending-approval" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 }
@@ -56,6 +69,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
         {/* Protected Clinic Routes */}
         <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

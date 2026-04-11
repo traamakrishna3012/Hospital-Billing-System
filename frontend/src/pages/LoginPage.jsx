@@ -80,12 +80,15 @@ export default function LoginPage() {
             <div>
               <label className="label-text">Email Address</label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="input-field"
                 placeholder="you@clinic.com"
+                autoComplete="email"
               />
             </div>
 
@@ -93,12 +96,15 @@ export default function LoginPage() {
               <label className="label-text">Password</label>
               <div className="relative">
                 <input
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="input-field pr-12"
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"

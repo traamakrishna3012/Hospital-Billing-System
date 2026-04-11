@@ -38,6 +38,7 @@ class User(Base):
         String(20), default="staff", server_default="staff"
     )  # superadmin | admin | staff
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # ── Relationships ─────────────────────────────────────────
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="users")

@@ -9,13 +9,19 @@ export const useAuthStore = create(
       refreshToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
+      setAuth: (user, accessToken, refreshToken) => {
+        // Ensure is_approved is captured and defaulted for safety
+        const userWithApproval = { 
+          ...user, 
+          is_approved: user?.is_approved ?? false 
+        };
         set({
-          user,
+          user: userWithApproval,
           accessToken,
           refreshToken,
           isAuthenticated: true,
-        }),
+        });
+      },
 
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken }),
