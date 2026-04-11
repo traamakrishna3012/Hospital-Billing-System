@@ -22,68 +22,38 @@ async def get_dashboard_stats(db: AsyncSession, tenant_id: UUID) -> DashboardSta
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Total revenue (paid bills only)
-    total_rev = await db.execute(
-        select(func.coalesce(func.sum(Bill.total), 0))
-        .where(Bill.tenant_id == tenant_id, Bill.status == "paid")
-    )
-    total_revenue = float(total_rev.scalar())
+    import asyncio
+    
+    # Define tasks
+    t1 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid"))
+    t2 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= today_start))
+    t3 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= month_start))
+    t4 = db.execute(select(func.count(Patient.id)).where(Patient.tenant_id == tenant_id))
+    t5 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id))
+    t6 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= today_start))
+    t7 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= month_start))
+    t8 = db.execute(select(func.count(Doctor.id)).where(Doctor.tenant_id == tenant_id, Doctor.is_active == True))
 
-    # Today's revenue
-    today_rev = await db.execute(
-        select(func.coalesce(func.sum(Bill.total), 0))
-        .where(
-            Bill.tenant_id == tenant_id,
-            Bill.status == "paid",
-            Bill.created_at >= today_start,
-        )
-    )
-    today_revenue = float(today_rev.scalar())
-
-    # Monthly revenue
-    month_rev = await db.execute(
-        select(func.coalesce(func.sum(Bill.total), 0))
-        .where(
-            Bill.tenant_id == tenant_id,
-            Bill.status == "paid",
-            Bill.created_at >= month_start,
-        )
-    )
-    month_revenue = float(month_rev.scalar())
-
-    # Counts
-    total_patients = (await db.execute(
-        select(func.count(Patient.id)).where(Patient.tenant_id == tenant_id)
-    )).scalar()
-
-    total_bills = (await db.execute(
-        select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id)
-    )).scalar()
-
-    today_bills = (await db.execute(
-        select(func.count(Bill.id))
-        .where(Bill.tenant_id == tenant_id, Bill.created_at >= today_start)
-    )).scalar()
-
-    month_bills = (await db.execute(
-        select(func.count(Bill.id))
-        .where(Bill.tenant_id == tenant_id, Bill.created_at >= month_start)
-    )).scalar()
-
-    total_doctors = (await db.execute(
-        select(func.count(Doctor.id))
-        .where(Doctor.tenant_id == tenant_id, Doctor.is_active == True)  # noqa: E712
-    )).scalar()
+    results = await asyncio.gather(t1, t2, t3, t4, t5, t6, t7, t8)
+    
+    total_revenue = float(results[0].scalar() or 0)
+    today_revenue = float(results[1].scalar() or 0)
+    month_revenue = float(results[2].scalar() or 0)
+    total_patients = results[3].scalar() or 0
+    total_bills = results[4].scalar() or 0
+    today_bills = results[5].scalar() or 0
+    month_bills = results[6].scalar() or 0
+    total_doctors = results[7].scalar() or 0
 
     return DashboardStats(
         total_revenue=total_revenue,
-        total_patients=total_patients or 0,
-        total_bills=total_bills or 0,
-        total_doctors=total_doctors or 0,
+        total_patients=total_patients,
+        total_bills=total_bills,
+        total_doctors=total_doctors,
         today_revenue=today_revenue,
-        today_bills=today_bills or 0,
+        today_bills=today_bills,
         month_revenue=month_revenue,
-        month_bills=month_bills or 0,
+        month_bills=month_bills,
     )
 
 
@@ -158,8 +128,10 @@ async def get_recent_transactions(
     limit: int = 10,
 ) -> list[RecentTransaction]:
     """Get recent bills for the dashboard."""
+    from sqlalchemy.orm import selectinload
     result = await db.execute(
         select(Bill)
+        .options(selectinload(Bill.patient))
         .where(Bill.tenant_id == tenant_id)
         .order_by(Bill.created_at.desc())
         .limit(limit)
