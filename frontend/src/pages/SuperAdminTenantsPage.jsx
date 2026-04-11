@@ -6,13 +6,14 @@ import {
   ShieldAlert, Settings2, Clock, ThumbsUp
 } from 'lucide-react';
 import { superadminAPI } from '../services/api';
-import { LoadingSpinner, StatusBadge } from '../components/UI';
+import { LoadingSpinner, StatusBadge, Modal } from '../components/UI';
 import { toast } from 'react-hot-toast';
 
 export default function SuperAdminTenantsPage() {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTenant, setSelectedTenant] = useState(null);
 
   useEffect(() => {
     loadTenants();
@@ -165,7 +166,7 @@ export default function SuperAdminTenantsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                       <button className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="View Details">
+                       <button onClick={() => setSelectedTenant(t)} className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="View Details">
                          <ExternalLink className="w-4 h-4" />
                        </button>
                        <button className="p-2 text-surface-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all" title="Clinic Settings">
@@ -186,6 +187,50 @@ export default function SuperAdminTenantsPage() {
           </table>
         </div>
       </div>
+
+      {/* Clinic Profile Modal */}
+      <Modal isOpen={!!selectedTenant} onClose={() => setSelectedTenant(null)} title="Clinic Profile" size="lg">
+        {selectedTenant && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center text-2xl font-bold">
+                {selectedTenant.name.charAt(0)}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-surface-800">{selectedTenant.name}</h2>
+                <p className="text-surface-500">{selectedTenant.email} • {selectedTenant.phone || 'No phone'}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-surface-50 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-500 font-semibold uppercase">Total Revenue</p>
+                <p className="text-2xl font-bold text-emerald-600">₹{selectedTenant.total_revenue.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-surface-50 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-500 font-semibold uppercase">Total Bills</p>
+                <p className="text-2xl font-bold text-surface-800">{selectedTenant.bill_count}</p>
+              </div>
+              <div className="p-4 bg-surface-50 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-500 font-semibold uppercase">Registered Patients</p>
+                <p className="text-2xl font-bold text-surface-800">{selectedTenant.patient_count}</p>
+              </div>
+              <div className="p-4 bg-surface-50 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-500 font-semibold uppercase">Doctors & Staff</p>
+                <p className="text-2xl font-bold text-surface-800">{selectedTenant.doctor_count} / {selectedTenant.user_count}</p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold text-surface-800 mb-2">Location & Details</h3>
+              <ul className="space-y-2 text-sm text-surface-600">
+                <li><strong>Address:</strong> {selectedTenant.address || 'N/A'}, {selectedTenant.city || 'N/A'}, {selectedTenant.state || 'N/A'}</li>
+                <li><strong>Registered On:</strong> {new Date(selectedTenant.created_at).toLocaleDateString()}</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
