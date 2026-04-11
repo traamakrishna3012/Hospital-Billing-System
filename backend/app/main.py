@@ -35,6 +35,31 @@ async def lifespan(app: FastAPI):
     # Ensure upload directories exist
     settings.upload_path  # triggers directory creation
 
+    # Seed SuperAdmin if not exists
+    try:
+        from sqlalchemy import select
+        from app.core.database import async_session_factory
+        from app.models.user import User
+        from app.core.security import hash_password
+        
+        async with async_session_factory() as db:
+            result = await db.execute(
+                select(User).where(User.email == "superadmin@hospitalbilling.com")
+            )
+            if not result.scalar_one_or_none():
+                db.add(User(
+                    email="superadmin@hospitalbilling.com",
+                    password_hash=hash_password("SuperSecure123"),
+                    full_name="System Super Admin",
+                    role="superadmin",
+                    tenant_id=None,
+                    is_active=True
+                ))
+                await db.commit()
+                logger.info("Successfully seeded superadmin in production DB.")
+    except Exception as e:
+        logger.error(f"Failed to seed superadmin: {e}")
+
     yield
 
     logger.info("Shutting down...")
