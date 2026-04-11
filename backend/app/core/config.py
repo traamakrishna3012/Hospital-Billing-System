@@ -34,7 +34,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ── CORS ──────────────────────────────────────────────────
-    CORS_ORIGINS: str | List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: str | List[str] = [
+        "http://localhost:5173", 
+        "http://localhost:3000",
+        "https://hospital-billing-system-rho.vercel.app",
+        "https://hospital-billing-system-lovat.vercel.app"
+    ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
