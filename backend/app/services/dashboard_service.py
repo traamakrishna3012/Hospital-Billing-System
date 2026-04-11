@@ -18,7 +18,7 @@ from app.schemas.schemas import DashboardStats, RevenueChartData, RecentTransact
 
 async def get_dashboard_stats(db: AsyncSession, tenant_id: UUID) -> DashboardStats:
     """Get aggregate statistics for the dashboard."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -60,7 +60,7 @@ async def get_revenue_chart_data(
     days: int = 30,
 ) -> list[RevenueChartData]:
     """Get time-series revenue data for charts."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     start_date = now - timedelta(days=days)
 
     if period == "monthly":
