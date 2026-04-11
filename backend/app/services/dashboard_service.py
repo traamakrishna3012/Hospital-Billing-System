@@ -22,28 +22,24 @@ async def get_dashboard_stats(db: AsyncSession, tenant_id: UUID) -> DashboardSta
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    import asyncio
-    
-    # Define tasks
-    t1 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid"))
-    t2 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= today_start))
-    t3 = db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= month_start))
-    t4 = db.execute(select(func.count(Patient.id)).where(Patient.tenant_id == tenant_id))
-    t5 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id))
-    t6 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= today_start))
-    t7 = db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= month_start))
-    t8 = db.execute(select(func.count(Doctor.id)).where(Doctor.tenant_id == tenant_id, Doctor.is_active == True))
+    # Execute sequentially to prevent AsyncSession concurrent transaction corruption issue in asyncpg
+    t1 = await db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid"))
+    t2 = await db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= today_start))
+    t3 = await db.execute(select(func.coalesce(func.sum(Bill.total), 0)).where(Bill.tenant_id == tenant_id, Bill.status == "paid", Bill.created_at >= month_start))
+    t4 = await db.execute(select(func.count(Patient.id)).where(Patient.tenant_id == tenant_id))
+    t5 = await db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id))
+    t6 = await db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= today_start))
+    t7 = await db.execute(select(func.count(Bill.id)).where(Bill.tenant_id == tenant_id, Bill.created_at >= month_start))
+    t8 = await db.execute(select(func.count(Doctor.id)).where(Doctor.tenant_id == tenant_id, Doctor.is_active == True))
 
-    results = await asyncio.gather(t1, t2, t3, t4, t5, t6, t7, t8)
-    
-    total_revenue = float(results[0].scalar() or 0)
-    today_revenue = float(results[1].scalar() or 0)
-    month_revenue = float(results[2].scalar() or 0)
-    total_patients = results[3].scalar() or 0
-    total_bills = results[4].scalar() or 0
-    today_bills = results[5].scalar() or 0
-    month_bills = results[6].scalar() or 0
-    total_doctors = results[7].scalar() or 0
+    total_revenue = float(t1.scalar() or 0)
+    today_revenue = float(t2.scalar() or 0)
+    month_revenue = float(t3.scalar() or 0)
+    total_patients = t4.scalar() or 0
+    total_bills = t5.scalar() or 0
+    today_bills = t6.scalar() or 0
+    month_bills = t7.scalar() or 0
+    total_doctors = t8.scalar() or 0
 
     return DashboardStats(
         total_revenue=total_revenue,
