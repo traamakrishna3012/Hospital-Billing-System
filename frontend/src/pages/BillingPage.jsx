@@ -83,6 +83,8 @@ export default function BillingPage() {
         items: [{ description: '', unit_price: '', quantity: 1, medical_test_id: '' }],
         tax_percent: '0', discount_type: 'percent', discount_value: '0', payment_mode: 'cash', status: 'paid', notes: '',
       });
+      setPatientSearch('');
+      setDoctorSearch('');
       setCreateModal(true);
     } catch (err) {
       toast.error('Failed to load form data');
@@ -238,10 +240,17 @@ export default function BillingPage() {
   };
 
   const [patientSearch, setPatientSearch] = useState('');
+  const [doctorSearch, setDoctorSearch] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
 
   const filteredPatientOptions = patients.filter(p => 
     p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
     p.phone.includes(patientSearch)
+  );
+
+  const filteredDoctorOptions = doctors.filter(d => 
+    d.name.toLowerCase().includes(doctorSearch.toLowerCase())
   );
 
   const subtotal = calcSubtotal();
@@ -338,31 +347,69 @@ export default function BillingPage() {
               <div className="relative">
                 <input 
                   type="text" 
-                  required
-                  list="patient-datalist"
                   placeholder="Search by name or phone..." 
-                  value={billForm.patient_id ? `${patients.find(p => p.id === billForm.patient_id)?.name} - ${patients.find(p => p.id === billForm.patient_id)?.phone}` : patientSearch}
+                  value={patientSearch}
+                  onFocus={() => setShowPatientDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowPatientDropdown(false), 200)}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    setPatientSearch(val);
-                    const matched = patients.find(p => `${p.name} - ${p.phone}` === val);
-                    if (matched) setBillForm({ ...billForm, patient_id: matched.id });
-                    else setBillForm({ ...billForm, patient_id: '' });
+                    setPatientSearch(e.target.value);
+                    setBillForm({ ...billForm, patient_id: '' });
                   }}
                   className="input-field mb-2"
                 />
-                <datalist id="patient-datalist">
-                  {patients.map((p) => <option key={p.id} value={`${p.name} - ${p.phone}`} />)}
-                </datalist>
+                {showPatientDropdown && filteredPatientOptions.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-surface-200 mt-1 max-h-48 overflow-y-auto rounded-xl shadow-lg">
+                    {filteredPatientOptions.map((p) => (
+                      <li 
+                        key={p.id} 
+                        onClick={() => {
+                          setBillForm({ ...billForm, patient_id: p.id });
+                          setPatientSearch(`${p.name} - ${p.phone}`);
+                          setShowPatientDropdown(false);
+                        }}
+                        className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm text-surface-700"
+                      >
+                        {p.name} <span className="text-surface-400 text-xs">— {p.phone}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <p className="text-[10px] text-surface-400">Reusing profiles saves time and keeps medical history linked.</p>
             </div>
             <div>
               <label className="label-text">Doctor *</label>
-              <select required value={billForm.doctor_id} onChange={(e) => setBillForm({ ...billForm, doctor_id: e.target.value, include_doctor_fee: false })} className="input-field">
-                <option value="">Select Doctor</option>
-                {doctors.map((d) => <option key={d.id} value={d.id}>Dr. {d.name} — ₹{d.consultation_fee}</option>)}
-              </select>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Type to search doctor..." 
+                  value={doctorSearch}
+                  onFocus={() => setShowDoctorDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDoctorDropdown(false), 200)}
+                  onChange={(e) => {
+                    setDoctorSearch(e.target.value);
+                    setBillForm({ ...billForm, doctor_id: '', include_doctor_fee: false });
+                  }}
+                  className="input-field"
+                />
+                {showDoctorDropdown && filteredDoctorOptions.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-surface-200 mt-1 max-h-48 overflow-y-auto rounded-xl shadow-lg">
+                    {filteredDoctorOptions.map((d) => (
+                      <li 
+                        key={d.id} 
+                        onClick={() => {
+                          setBillForm({ ...billForm, doctor_id: d.id, include_doctor_fee: false });
+                          setDoctorSearch(`Dr. ${d.name}`);
+                          setShowDoctorDropdown(false);
+                        }}
+                        className="px-4 py-2 hover:bg-primary-50 cursor-pointer text-sm text-surface-700 flex justify-between"
+                      >
+                        <span>Dr. {d.name}</span> <span className="text-surface-400 text-xs">₹{d.consultation_fee}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               {billForm.doctor_id && (
                  <label className="flex items-center gap-2 mt-2 text-sm text-surface-600 cursor-pointer">
                     <input type="checkbox" className="rounded text-primary-600" 
@@ -418,18 +465,22 @@ export default function BillingPage() {
               <input type="number" min="0" max="100" step="0.01" value={billForm.tax_percent} onChange={(e) => setBillForm({ ...billForm, tax_percent: e.target.value })} className="input-field" placeholder="18" />
             </div>
             <div className="col-span-1">
-              <label className="label-text flex items-center justify-between">
-                <span>Discount</span>
-                <select
-                  value={billForm.discount_type}
-                  onChange={(e) => setBillForm({ ...billForm, discount_type: e.target.value })}
-                  className="text-xs bg-transparent text-primary-600 font-semibold focus:outline-none"
+              <label className="label-text">Discount</label>
+              <div className="relative flex items-center">
+                <input 
+                   type="number" min="0" step="0.01" value={billForm.discount_value} 
+                   onChange={(e) => setBillForm({ ...billForm, discount_value: e.target.value })} 
+                   className="input-field pr-16" placeholder="0" 
+                />
+                <select 
+                   value={billForm.discount_type}
+                   onChange={(e) => setBillForm({ ...billForm, discount_type: e.target.value })}
+                   className="absolute right-[1px] h-[calc(100%-2px)] rounded-r-xl border-l border-surface-200 bg-surface-50 px-2 text-surface-600 font-medium text-sm focus:outline-none"
                 >
                   <option value="percent">%</option>
                   <option value="flat">₹</option>
                 </select>
-              </label>
-              <input type="number" min="0" step="0.01" value={billForm.discount_value} onChange={(e) => setBillForm({ ...billForm, discount_value: e.target.value })} className="input-field" placeholder="0" />
+              </div>
             </div>
             <div>
               <label className="label-text">Payment Mode</label>
