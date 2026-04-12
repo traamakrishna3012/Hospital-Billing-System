@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { 
   Building2, Search, Filter, MoreVertical, 
   CheckCircle2, XCircle, ArrowUpRight, ExternalLink,
-  ShieldAlert, Settings2, Clock, ThumbsUp, Trash2
+  ShieldAlert, Settings2, Clock, ThumbsUp, Trash2,
+  Users, Activity, Receipt, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import { superadminAPI } from '../services/api';
 import { LoadingSpinner, StatusBadge, Modal } from '../components/UI';
@@ -78,6 +79,21 @@ export default function SuperAdminTenantsPage() {
     }
   };
 
+  const handleToggleModule = async (moduleName) => {
+    const currentModules = selectedTenant.modules || { patients: true, doctors: true, tests: true, billing: true, reports: true, staff: true };
+    const newModules = { ...currentModules, [moduleName]: !currentModules[moduleName] };
+    
+    try {
+      await superadminAPI.updateTenant(selectedTenant.id, { modules: newModules });
+      const updatedTenant = { ...selectedTenant, modules: newModules };
+      setSelectedTenant(updatedTenant);
+      setTenants(prev => prev.map(t => t.id === updatedTenant.id ? updatedTenant : t));
+      toast.success(`${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)} module ${newModules[moduleName] ? 'enabled' : 'disabled'}`);
+    } catch (err) {
+      toast.error('Failed to update module access');
+    }
+  };
+
   const filteredTenants = tenants.filter(t => 
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,6 +101,15 @@ export default function SuperAdminTenantsPage() {
   );
 
   if (loading) return <LoadingSpinner />;
+
+  const AVAILABLE_MODULES = [
+    { id: 'patients', label: 'Patients Management', icon: Users },
+    { id: 'doctors', label: 'Doctors', icon: Activity },
+    { id: 'tests', label: 'Tests & Services', icon: ShieldAlert },
+    { id: 'billing', label: 'Billing & Invoicing', icon: Receipt },
+    { id: 'reports', label: 'Reports & Analytics', icon: TrendingUp },
+    { id: 'staff', label: 'Staff Configuration', icon: ShieldCheck }
+  ];
 
   return (
     <div className="space-y-6">
@@ -294,6 +319,36 @@ export default function SuperAdminTenantsPage() {
                 <li><strong>Address:</strong> {selectedTenant.address || 'N/A'}, {selectedTenant.city || 'N/A'}, {selectedTenant.state || 'N/A'}</li>
                 <li><strong>Registered On:</strong> {new Date(selectedTenant.created_at).toLocaleDateString()}</li>
               </ul>
+            </div>
+            
+            {/* Module Access Control */}
+            <div className="pt-4 border-t border-surface-100">
+              <h3 className="text-sm font-semibold text-surface-800 mb-4 flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-primary-600" />
+                Access Control List
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {AVAILABLE_MODULES.map((mod) => {
+                   const ModIcon = mod.icon;
+                   const isEnabled = selectedTenant.modules?.[mod.id] !== false; // defaults to true if undefined
+                   return (
+                     <div key={mod.id} className="flex items-center justify-between p-3 rounded-xl border border-surface-100 bg-surface-50">
+                       <div className="flex items-center gap-3 text-surface-700">
+                         <div className={`p-1.5 rounded-lg ${isEnabled ? 'bg-primary-100 text-primary-600' : 'bg-surface-200 text-surface-500'}`}>
+                           <ModIcon className="w-4 h-4" />
+                         </div>
+                         <span className={`text-sm font-medium ${!isEnabled && 'text-surface-400 line-through decoration-surface-300'}`}>{mod.label}</span>
+                       </div>
+                       <button 
+                         onClick={() => handleToggleModule(mod.id)} 
+                         className={`w-10 h-6 flex items-center rounded-full transition-colors ${isEnabled ? 'bg-primary-500' : 'bg-surface-300'}`}
+                       >
+                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-5' : 'translate-x-1 shadow-sm'}`} />
+                       </button>
+                     </div>
+                   );
+                })}
+              </div>
             </div>
           </div>
         )}

@@ -53,12 +53,13 @@ async def lifespan(app: FastAPI):
                 await db.rollback()
                 logger.warning(f"Migration (users) skipped: {e}")
 
-            # 2. Manual Migration - Tenants: is_approved, biller_header
+            # 2. Manual Migration - Tenants: is_approved, biller_header, modules
             try:
                 await db.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE"))
                 await db.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS biller_header TEXT"))
+                await db.execute(text('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS modules JSON DEFAULT \'{"patients": true, "doctors": true, "tests": true, "billing": true, "reports": true, "staff": true}\'::json'))
                 await db.commit()
-                logger.info("Migration: tenants table updated with is_approved and biller_header")
+                logger.info("Migration: tenants table updated with is_approved, biller_header, and modules")
             except Exception as e:
                 await db.rollback()
                 logger.warning(f"Migration (tenants table) skipped: {e}")

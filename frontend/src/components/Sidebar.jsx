@@ -9,17 +9,17 @@ import {
 import { useAuthStore } from '../store/authStore';
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/patients', icon: Users, label: 'Patients' },
-  { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
-  { to: '/tests', icon: FlaskConical, label: 'Tests & Services' },
-  { to: '/billing', icon: Receipt, label: 'Billing' },
-  { to: '/reports', icon: FileBarChart, label: 'Reports' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
+  { to: '/patients', icon: Users, label: 'Patients', id: 'patients' },
+  { to: '/doctors', icon: Stethoscope, label: 'Doctors', id: 'doctors' },
+  { to: '/tests', icon: FlaskConical, label: 'Tests & Services', id: 'tests' },
+  { to: '/billing', icon: Receipt, label: 'Billing', id: 'billing' },
+  { to: '/reports', icon: FileBarChart, label: 'Reports', id: 'reports' },
 ];
 
 const adminItems = [
-  { to: '/staff', icon: UserCog, label: 'Staff Management' },
-  { to: '/settings', icon: Settings, label: 'Clinic Settings' },
+  { to: '/staff', icon: UserCog, label: 'Staff Management', id: 'staff' },
+  { to: '/settings', icon: Settings, label: 'Clinic Settings', id: 'settings' },
 ];
 
 const superadminItems = [
@@ -66,6 +66,16 @@ export default function Sidebar() {
       </AnimatePresence>
     </NavLink>
   ));
+
+  const filteredNavItems = navItems.filter(item => {
+    if (['dashboard'].includes(item.id)) return true;
+    return user?.tenant_modules?.[item.id] !== false;
+  });
+
+  const filteredAdminItems = adminItems.filter(item => {
+    if (item.id === 'settings') return true;
+    return user?.tenant_modules?.[item.id] !== false;
+  });
 
   return (
     <motion.aside
@@ -115,7 +125,7 @@ export default function Sidebar() {
                 Main Menu
               </p>
             )}
-            {renderNavItems(navItems)}
+            {renderNavItems(filteredNavItems)}
 
             {isAdmin() && (
               <>
@@ -124,7 +134,7 @@ export default function Sidebar() {
                     Administration
                   </p>
                 )}
-                {renderNavItems(adminItems)}
+                {renderNavItems(filteredAdminItems)}
               </>
             )}
           </>

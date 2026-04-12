@@ -107,10 +107,21 @@ async def register(data: RegisterRequest, db: DBSession, background_tasks: Backg
     # Send welcome email (background task)
     background_tasks.add_task(send_welcome_email, tenant.name, user.full_name, user.email)
 
+    # Fetch tenant modules
+    tenant_modules = None
+    if user.tenant_id:
+        from sqlalchemy import select
+        from app.models.tenant import Tenant
+        t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
+        tenant_modules = t_res.scalar_one_or_none()
+    
+    user_data = UserResponse.model_validate(user).model_dump()
+    user_data["tenant_modules"] = tenant_modules
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UserResponse.model_validate(user),
+        user=user_data,
     )
 
 
@@ -137,12 +148,22 @@ async def login(data: LoginRequest, db: DBSession):
     access_token = create_access_token(user.id, user.tenant_id, user.role)
     refresh_token = create_refresh_token(user.id, user.tenant_id)
 
+    # Fetch tenant modules
+    tenant_modules = None
+    if user.tenant_id:
+        from sqlalchemy import select
+        from app.models.tenant import Tenant
+        t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
+        tenant_modules = t_res.scalar_one_or_none()
+
+    user_data = UserResponse.model_validate(user).model_dump()
+    user_data["tenant_modules"] = tenant_modules
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UserResponse.model_validate(user),
+        user=user_data,
     )
-
 
 @router.post("/refresh", response_model=TokenResponse, summary="Refresh access token")
 async def refresh_token(data: RefreshRequest, db: DBSession):
@@ -169,14 +190,35 @@ async def refresh_token(data: RefreshRequest, db: DBSession):
     access_token = create_access_token(user.id, user.tenant_id, user.role)
     new_refresh_token = create_refresh_token(user.id, user.tenant_id)
 
+    # Fetch tenant modules
+    tenant_modules = None
+    if user.tenant_id:
+        from sqlalchemy import select
+        from app.models.tenant import Tenant
+        t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
+        tenant_modules = t_res.scalar_one_or_none()
+
+    user_data = UserResponse.model_validate(user).model_dump()
+    user_data["tenant_modules"] = tenant_modules
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh_token,
-        user=UserResponse.model_validate(user),
+        user=user_data,
     )
 
 
 @router.get("/me", response_model=UserResponse, summary="Get current user profile")
-async def get_me(current_user: CurrentUser):
-    """Get the authenticated user's profile."""
-    return UserResponse.model_validate(current_user)
+async def get_me(current_user: CurrentUser, db: DBSession):
+    """Return the profile of the currently authenticated user including module permissions."""
+    tenant_modules = None
+    if current_user.tenant_id:
+        from sqlalchemy import select
+        from app.models.tenant import Tenant
+        t_res = await db.execute(select(Tenant.modules).where(Tenant.id == current_user.tenant_id))
+        tenant_modules = t_res.scalar_one_or_none()
+
+    # We manually patch the pydantic model with extra fields
+    user_data = UserResponse.model_validate(current_user).model_dump()
+    user_data["tenant_modules"] = tenant_modules
+    return user_data

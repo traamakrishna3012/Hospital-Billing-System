@@ -64,6 +64,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     is_approved: bool = False
+    tenant_modules: Optional[dict] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -108,6 +109,7 @@ class TenantResponse(BaseModel):
     is_active: bool
     is_approved: bool
     biller_header: Optional[str] = None
+    modules: Optional[dict] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

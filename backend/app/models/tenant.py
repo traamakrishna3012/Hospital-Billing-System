@@ -42,6 +42,14 @@ class Tenant(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
+    # ── Module Access Control ─────────────────────────────────
+    from sqlalchemy import JSON
+    modules: Mapped[dict] = mapped_column(
+        JSON,
+        default=lambda: {"patients": True, "doctors": True, "tests": True, "billing": True, "reports": True, "staff": True},
+        server_default='{"patients": true, "doctors": true, "tests": true, "billing": true, "reports": true, "staff": true}'
+    )
+
     # ── Customization ─────────────────────────────────────────
     biller_header: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
