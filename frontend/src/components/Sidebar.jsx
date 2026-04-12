@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Stethoscope, FlaskConical,
   Receipt, Settings, UserCog, FileBarChart, LogOut,
-  ChevronLeft, ChevronRight, Building2, Menu,
+  ChevronLeft, ChevronRight, Building2, Menu, TrendingUp
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -25,6 +25,7 @@ const adminItems = [
 const superadminItems = [
   { to: '/super/dashboard', icon: LayoutDashboard, label: 'Platform Stats' },
   { to: '/super/tenants', icon: Building2, label: 'Manage Clinics' },
+  { to: '/super/revenue', icon: TrendingUp, label: 'Revenue Analytics' },
 ];
 
 export default function Sidebar() {

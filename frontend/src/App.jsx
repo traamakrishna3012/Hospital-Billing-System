@@ -14,6 +14,7 @@ import StaffPage from './pages/StaffPage';
 import ReportsPage from './pages/ReportsPage';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminTenantsPage from './pages/SuperAdminTenantsPage';
+import SuperAdminRevenuePage from './pages/SuperAdminRevenuePage';
 
 import PendingApprovalPage from './pages/PendingApprovalPage';
 
@@ -86,6 +87,7 @@ export default function App() {
           {/* Super Admin Section (Inside same layout but with SuperAdminRoute wrapper) */}
           <Route path="super/dashboard" element={<SuperAdminRoute><SuperAdminDashboard /></SuperAdminRoute>} />
           <Route path="super/tenants" element={<SuperAdminRoute><SuperAdminTenantsPage /></SuperAdminRoute>} />
+          <Route path="super/revenue" element={<SuperAdminRoute><SuperAdminRevenuePage /></SuperAdminRoute>} />
         </Route>
 
         {/* Catch-all */}

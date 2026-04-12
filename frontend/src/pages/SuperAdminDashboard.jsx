@@ -144,7 +144,7 @@ export default function SuperAdminDashboard() {
                <ArrowUpRight className="w-4 h-4 text-surface-400 group-hover:text-violet-600" />
              </button>
              
-             <button onClick={() => window.location.href = '/super/tenants'} className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
+             <button onClick={() => window.location.href = '/super/revenue'} className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
                <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-lg bg-surface-100 group-hover:bg-white flex items-center justify-center">
                    <TrendingUp className="w-4 h-4 text-surface-600 group-hover:text-emerald-600" />
