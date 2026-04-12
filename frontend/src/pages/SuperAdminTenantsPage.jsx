@@ -233,6 +233,9 @@ export default function SuperAdminTenantsPage() {
                        <button onClick={() => setSelectedTenant(t)} className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="View Details">
                          <ExternalLink className="w-4 h-4" />
                        </button>
+                       <button onClick={() => setSelectedTenant(t)} className="p-2 text-surface-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all" title="Clinic Settings">
+                         <Settings2 className="w-4 h-4" />
+                       </button>
                        <button onClick={() => deleteTenants([t.id])} className="p-2 text-surface-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete Clinic">
                          <Trash2 className="w-4 h-4" />
                        </button>
