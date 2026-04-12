@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { billAPI, patientAPI, doctorAPI, testAPI } from '../services/api';
+import { billAPI, patientAPI, doctorAPI, testAPI, clinicAPI } from '../services/api';
 import {
   SearchInput, Pagination, Modal, EmptyState,
   LoadingSpinner, StatusBadge,
@@ -42,6 +42,8 @@ export default function BillingPage() {
     notes: '',
   });
 
+  const [clinicProfile, setClinicProfile] = useState(null);
+
   const loadBills = useCallback(async () => {
     setLoading(true);
     try {
@@ -58,6 +60,12 @@ export default function BillingPage() {
 
   useEffect(() => { loadBills(); }, [loadBills]);
   useEffect(() => { setPage(1); }, [search, statusFilter]);
+
+  useEffect(() => {
+    clinicAPI.getProfile()
+      .then(res => setClinicProfile(res.data))
+      .catch(() => {});
+  }, []);
 
   const openCreateModal = async () => {
     try {
@@ -513,10 +521,10 @@ export default function BillingPage() {
             {/* Print Only Layout */}
             <div className="print-only bg-white text-black p-8 text-xs font-serif leading-tight">
                <div className="border-b-2 border-black pb-4 mb-4 text-center">
-                  <h1 className="text-2xl font-bold font-sans uppercase">Jeevan Hospital</h1>
-                  <p className="mt-1">Reg. No. DR86486</p>
-                  <p>DP Road, Pune - 411056.</p>
-                  <p>Ph: 08208064299, Timing: AVAILABLE 24 HOURS AND 7 DAYS.</p>
+                  <h1 className="text-2xl font-bold font-sans uppercase">{clinicProfile?.name || 'Hospital Billing'}</h1>
+                  <p className="mt-1">Reg. No. {clinicProfile?.registration_number || '----------'}</p>
+                  <p>{clinicProfile?.address || ''}</p>
+                  <p>Ph: {clinicProfile?.phone || '----------'}</p>
                </div>
                
                <div className="flex justify-between border-b-2 border-black pb-4 mb-4">
