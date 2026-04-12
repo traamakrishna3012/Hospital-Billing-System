@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Building2, Search, Filter, MoreVertical, 
   CheckCircle2, XCircle, ArrowUpRight, ExternalLink,
-  ShieldAlert, Settings2, Clock, ThumbsUp
+  ShieldAlert, Settings2, Clock, ThumbsUp, Trash2
 } from 'lucide-react';
 import { superadminAPI } from '../services/api';
 import { LoadingSpinner, StatusBadge, Modal } from '../components/UI';
@@ -14,6 +14,8 @@ export default function SuperAdminTenantsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTenant, setSelectedTenant] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadTenants();
@@ -47,6 +49,32 @@ export default function SuperAdminTenantsPage() {
       toast.success('Clinic approved successfully!');
     } catch (err) {
       toast.error('Failed to approve clinic');
+    }
+  };
+
+  const deleteTenants = async (ids) => {
+    if (!window.confirm(`Are you sure you want to completely delete ${ids.length > 1 ? 'these clinics' : 'this clinic'}? This action cannot be undone.`)) return;
+    
+    setIsDeleting(true);
+    try {
+      for (const id of ids) {
+        await superadminAPI.deactivateTenant(id);
+      }
+      setTenants(prev => prev.filter(t => !ids.includes(t.id)));
+      setSelectedIds([]);
+      toast.success(`Successfully deleted ${ids.length} clinic(s)`);
+    } catch (err) {
+      toast.error('Failed to delete clinic(s)');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredTenants.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredTenants.map(t => t.id));
     }
   };
 
@@ -86,12 +114,37 @@ export default function SuperAdminTenantsPage() {
         </button>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-center justify-between animate-fade-in">
+          <span className="text-sm font-medium text-red-800">
+            {selectedIds.length} clinic(s) selected
+          </span>
+          <button
+            onClick={() => deleteTenants(selectedIds)}
+            disabled={isDeleting}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {isDeleting ? 'Deleting...' : 'Delete Selected'}
+          </button>
+        </div>
+      )}
+
       {/* Tenant Table */}
       <div className="glass-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-surface-50 border-b border-surface-100">
+                <th className="px-6 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={filteredTenants.length > 0 && selectedIds.length === filteredTenants.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                  />
+                </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Hospital / Clinic</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Approval</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-surface-500 uppercase">Stats</th>
@@ -102,7 +155,18 @@ export default function SuperAdminTenantsPage() {
             </thead>
             <tbody className="divide-y divide-surface-100">
               {filteredTenants.map((t) => (
-                <tr key={t.id} className="hover:bg-surface-50/50 transition-colors">
+                <tr key={t.id} className={`hover:bg-surface-50/50 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary-50/30' : ''}`}>
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(t.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedIds(prev => [...prev, t.id]);
+                        else setSelectedIds(prev => prev.filter(id => id !== t.id));
+                      }}
+                      className="rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
@@ -169,8 +233,8 @@ export default function SuperAdminTenantsPage() {
                        <button onClick={() => setSelectedTenant(t)} className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="View Details">
                          <ExternalLink className="w-4 h-4" />
                        </button>
-                       <button className="p-2 text-surface-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all" title="Clinic Settings">
-                         <Settings2 className="w-4 h-4" />
+                       <button onClick={() => deleteTenants([t.id])} className="p-2 text-surface-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete Clinic">
+                         <Trash2 className="w-4 h-4" />
                        </button>
                     </div>
                   </td>
@@ -178,7 +242,7 @@ export default function SuperAdminTenantsPage() {
               ))}
               {filteredTenants.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-surface-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-surface-400">
                     No clinics found matching your search.
                   </td>
                 </tr>

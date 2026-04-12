@@ -113,7 +113,7 @@ export default function SuperAdminDashboard() {
           </div>
         </motion.div>
 
-        <motion.div
+         <motion.div
            initial={{ opacity: 0, y: 10 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.2 }}
@@ -124,7 +124,7 @@ export default function SuperAdminDashboard() {
            </div>
            
            <div className="space-y-3">
-             <button className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-primary-300 hover:bg-primary-50 transition-all group">
+             <button onClick={() => window.location.href = '/super/tenants'} className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-primary-300 hover:bg-primary-50 transition-all group">
                <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-lg bg-surface-100 group-hover:bg-white flex items-center justify-center">
                    <Building2 className="w-4 h-4 text-surface-600 group-hover:text-primary-600" />
@@ -134,7 +134,7 @@ export default function SuperAdminDashboard() {
                <ArrowUpRight className="w-4 h-4 text-surface-400 group-hover:text-primary-600" />
              </button>
              
-             <button className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-violet-300 hover:bg-violet-50 transition-all group">
+             <button onClick={() => window.location.href = '/super/tenants'} className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-violet-300 hover:bg-violet-50 transition-all group">
                <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-lg bg-surface-100 group-hover:bg-white flex items-center justify-center">
                    <Users className="w-4 h-4 text-surface-600 group-hover:text-violet-600" />
@@ -144,7 +144,7 @@ export default function SuperAdminDashboard() {
                <ArrowUpRight className="w-4 h-4 text-surface-400 group-hover:text-violet-600" />
              </button>
              
-             <button className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
+             <button onClick={() => window.location.href = '/super/tenants'} className="flex items-center justify-between w-full p-4 rounded-xl border border-surface-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
                <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-lg bg-surface-100 group-hover:bg-white flex items-center justify-center">
                    <TrendingUp className="w-4 h-4 text-surface-600 group-hover:text-emerald-600" />
