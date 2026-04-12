@@ -33,6 +33,7 @@ export default function BillingPage() {
   const [billForm, setBillForm] = useState({
     patient_id: '',
     doctor_id: '',
+    include_doctor_fee: false,
     items: [{ description: '', unit_price: '', quantity: 1, medical_test_id: '' }],
     tax_percent: '0',
     discount_type: 'percent', // 'percent' or 'flat'
@@ -78,7 +79,7 @@ export default function BillingPage() {
       setDoctors(dRes.data.items);
       setTests(tRes.data.items);
       setBillForm({
-        patient_id: '', doctor_id: '',
+        patient_id: '', doctor_id: '', include_doctor_fee: false,
         items: [{ description: '', unit_price: '', quantity: 1, medical_test_id: '' }],
         tax_percent: '0', discount_type: 'percent', discount_value: '0', payment_mode: 'cash', status: 'paid', notes: '',
       });
@@ -128,9 +129,14 @@ export default function BillingPage() {
   };
 
   const calcSubtotal = () => {
-    return billForm.items.reduce((sum, item) => {
+    let sub = billForm.items.reduce((sum, item) => {
       return sum + (parseFloat(item.unit_price) || 0) * (parseInt(item.quantity) || 1);
     }, 0);
+    if (billForm.include_doctor_fee && billForm.doctor_id) {
+       const doc = doctors.find(d => d.id === billForm.doctor_id);
+       if (doc) sub += parseFloat(doc.consultation_fee || 0);
+    }
+    return sub;
   };
 
   const handleCreateBill = async (e) => {
@@ -146,7 +152,7 @@ export default function BillingPage() {
 
     const payload = {
       patient_id: billForm.patient_id,
-      doctor_id: billForm.doctor_id || null,
+      doctor_id: billForm.doctor_id,
       items: billForm.items.map((item) => ({
         description: item.description,
         unit_price: parseFloat(item.unit_price),
@@ -159,6 +165,18 @@ export default function BillingPage() {
       status: billForm.status,
       notes: billForm.notes || null,
     };
+
+    if (billForm.include_doctor_fee && billForm.doctor_id) {
+       const doc = doctors.find(d => d.id === billForm.doctor_id);
+       if (doc && doc.consultation_fee > 0) {
+           payload.items.push({
+               description: `Consultation Fee: Dr. ${doc.name}`,
+               unit_price: parseFloat(doc.consultation_fee),
+               quantity: 1,
+               medical_test_id: null
+           });
+       }
+    }
 
     try {
       await billAPI.create(payload);
@@ -320,29 +338,40 @@ export default function BillingPage() {
               <div className="relative">
                 <input 
                   type="text" 
+                  required
+                  list="patient-datalist"
                   placeholder="Search by name or phone..." 
-                  value={patientSearch}
-                  onChange={(e) => setPatientSearch(e.target.value)}
+                  value={billForm.patient_id ? `${patients.find(p => p.id === billForm.patient_id)?.name} - ${patients.find(p => p.id === billForm.patient_id)?.phone}` : patientSearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPatientSearch(val);
+                    const matched = patients.find(p => `${p.name} - ${p.phone}` === val);
+                    if (matched) setBillForm({ ...billForm, patient_id: matched.id });
+                    else setBillForm({ ...billForm, patient_id: '' });
+                  }}
                   className="input-field mb-2"
                 />
-                <select 
-                  required 
-                  value={billForm.patient_id} 
-                  onChange={(e) => setBillForm({ ...billForm, patient_id: e.target.value })} 
-                  className="input-field"
-                >
-                  <option value="">{filteredPatientOptions.length === 0 ? 'No patients found' : `Select Patient (${filteredPatientOptions.length} matching found)`}</option>
-                  {filteredPatientOptions.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.phone}</option>)}
-                </select>
+                <datalist id="patient-datalist">
+                  {patients.map((p) => <option key={p.id} value={`${p.name} - ${p.phone}`} />)}
+                </datalist>
               </div>
               <p className="text-[10px] text-surface-400">Reusing profiles saves time and keeps medical history linked.</p>
             </div>
             <div>
-              <label className="label-text">Doctor</label>
-              <select value={billForm.doctor_id} onChange={(e) => setBillForm({ ...billForm, doctor_id: e.target.value })} className="input-field">
-                <option value="">Select Doctor (optional)</option>
+              <label className="label-text">Doctor *</label>
+              <select required value={billForm.doctor_id} onChange={(e) => setBillForm({ ...billForm, doctor_id: e.target.value, include_doctor_fee: false })} className="input-field">
+                <option value="">Select Doctor</option>
                 {doctors.map((d) => <option key={d.id} value={d.id}>Dr. {d.name} — ₹{d.consultation_fee}</option>)}
               </select>
+              {billForm.doctor_id && (
+                 <label className="flex items-center gap-2 mt-2 text-sm text-surface-600 cursor-pointer">
+                    <input type="checkbox" className="rounded text-primary-600" 
+                       checked={billForm.include_doctor_fee}
+                       onChange={(e) => setBillForm({ ...billForm, include_doctor_fee: e.target.checked })}
+                    />
+                    Include Consultation Fee
+                 </label>
+              )}
             </div>
           </div>
 
