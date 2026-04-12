@@ -203,11 +203,13 @@ export default function BillingPage() {
   const downloadPDF = async (id) => {
     try {
       const response = await billAPI.downloadPDF(id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `receipt-${id}.pdf`;
+      link.setAttribute('download', `receipt-${selectedBill?.bill_number || id}.pdf`);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('PDF downloaded');
     } catch (err) {
