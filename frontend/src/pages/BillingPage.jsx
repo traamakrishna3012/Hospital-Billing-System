@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { saveAs } from 'file-saver';
 import { billAPI, patientAPI, doctorAPI, testAPI, clinicAPI } from '../services/api';
 import {
   SearchInput, Pagination, Modal, EmptyState,
@@ -203,14 +204,8 @@ export default function BillingPage() {
   const downloadPDF = async (id) => {
     try {
       const response = await billAPI.downloadPDF(id);
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `receipt-${selectedBill?.bill_number || id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      saveAs(blob, `receipt-${selectedBill?.bill_number || id}.pdf`);
       toast.success('PDF downloaded');
     } catch (err) {
       toast.error('Failed to download PDF');
