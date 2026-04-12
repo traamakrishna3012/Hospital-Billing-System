@@ -110,8 +110,6 @@ async def register(data: RegisterRequest, db: DBSession, background_tasks: Backg
     # Fetch tenant modules
     tenant_modules = None
     if user.tenant_id:
-        from sqlalchemy import select
-        from app.models.tenant import Tenant
         t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
         tenant_modules = t_res.scalar_one_or_none()
     
@@ -151,8 +149,6 @@ async def login(data: LoginRequest, db: DBSession):
     # Fetch tenant modules
     tenant_modules = None
     if user.tenant_id:
-        from sqlalchemy import select
-        from app.models.tenant import Tenant
         t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
         tenant_modules = t_res.scalar_one_or_none()
 
@@ -193,8 +189,6 @@ async def refresh_token(data: RefreshRequest, db: DBSession):
     # Fetch tenant modules
     tenant_modules = None
     if user.tenant_id:
-        from sqlalchemy import select
-        from app.models.tenant import Tenant
         t_res = await db.execute(select(Tenant.modules).where(Tenant.id == user.tenant_id))
         tenant_modules = t_res.scalar_one_or_none()
 
@@ -213,8 +207,6 @@ async def get_me(current_user: CurrentUser, db: DBSession):
     """Return the profile of the currently authenticated user including module permissions."""
     tenant_modules = None
     if current_user.tenant_id:
-        from sqlalchemy import select
-        from app.models.tenant import Tenant
         t_res = await db.execute(select(Tenant.modules).where(Tenant.id == current_user.tenant_id))
         tenant_modules = t_res.scalar_one_or_none()
 
