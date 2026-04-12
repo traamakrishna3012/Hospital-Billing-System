@@ -80,6 +80,9 @@ export const testAPI = {
   create: (data) => api.post('/tests', data),
   update: (id, data) => api.put(`/tests/${id}`, data),
   delete: (id) => api.delete(`/tests/${id}`),
+  bulkImport: (formData) => api.post('/tests/bulk-upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
 };
 
 // ── Billing API ──────────────────────────────────────────────

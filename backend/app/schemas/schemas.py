@@ -76,13 +76,13 @@ class UserCreateRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=255)
     phone: str = Field(default="", max_length=20)
     password: str = Field(..., min_length=8, max_length=128)
-    role: str = Field(default="staff", pattern="^(admin|staff)$")
+    role: str = Field(default="staff", pattern="^(admin|staff|doctor)$")
 
 
 class UserUpdateRequest(BaseModel):
     full_name: Optional[str] = Field(None, min_length=2, max_length=255)
     phone: Optional[str] = Field(None, max_length=20)
-    role: Optional[str] = Field(None, pattern="^(admin|staff)$")
+    role: Optional[str] = Field(None, pattern="^(admin|staff|doctor)$")
     is_active: Optional[bool] = None
 
 

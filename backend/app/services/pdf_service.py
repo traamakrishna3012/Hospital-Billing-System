@@ -219,12 +219,19 @@ def generate_receipt_pdf(
     elements.append(Spacer(1, 6 * mm))
 
     # ── Items Table ───────────────────────────────────────────
-    header = ["#", "Description", "Qty", "Unit Price", "Total"]
+    header = ["#", "Code", "Description", "Qty", "Price", "Total"]
     table_data = [header]
 
     for i, item in enumerate(items_data, 1):
+        item_code = item.get("medical_test_id")
+        if item_code:
+            item_code = str(item_code)[:6].upper()
+        else:
+            item_code = "CST-00" + str(i)
+            
         table_data.append([
             str(i),
+            item_code,
             item.get("description", ""),
             str(item.get("quantity", 1)),
             f"₹{item.get('unit_price', 0):,.2f}",
@@ -233,7 +240,7 @@ def generate_receipt_pdf(
 
     items_table = Table(
         table_data,
-        colWidths=["8%", "42%", "10%", "20%", "20%"],
+        colWidths=["8%", "17%", "35%", "10%", "15%", "15%"],
         repeatRows=1,
     )
     items_table.setStyle(TableStyle([

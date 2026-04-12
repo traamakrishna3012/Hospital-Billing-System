@@ -156,6 +156,7 @@ export default function StaffPage() {
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="input-field">
               <option value="staff">Staff / Receptionist</option>
               <option value="admin">Admin</option>
+              <option value="doctor">Consulting Doctor</option>
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-2">

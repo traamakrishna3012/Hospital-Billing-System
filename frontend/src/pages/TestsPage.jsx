@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FlaskConical, Plus, Pencil, Trash2, Tag } from 'lucide-react';
+import { FlaskConical, Plus, Pencil, Trash2, Tag, UploadCloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { testAPI } from '../services/api';
 import { SearchInput, Pagination, Modal, EmptyState, LoadingSpinner } from '../components/UI';
@@ -19,6 +19,28 @@ export default function TestsPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', code: '', category_id: '' });
   const [catForm, setCatForm] = useState({ name: '', description: '' });
+  
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const toastId = toast.loading('Uploading and parsing file...');
+    try {
+      const res = await testAPI.bulkImport(formData);
+      toast.success(res.data.message || 'File uploaded successfully', { id: toastId });
+      loadTests();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to upload file', { id: toastId });
+    } finally {
+      // Clear value so the same file can be uploaded again if needed
+      e.target.value = null;
+    }
+  };
 
   const loadTests = useCallback(async () => {
     setLoading(true);
@@ -111,6 +133,16 @@ export default function TestsPage() {
           <p className="text-surface-400 mt-1">{total} tests registered</p>
         </div>
         <div className="flex gap-3">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, .pdf, .docx" 
+            className="hidden" 
+          />
+          <button onClick={() => fileInputRef.current?.click()} className="btn-secondary flex items-center gap-2">
+             <UploadCloud className="w-4 h-4" /> Bulk Upload
+          </button>
           <button onClick={() => setCatModalOpen(true)} className="btn-secondary flex items-center gap-2">
             <Tag className="w-4 h-4" /> Add Category
           </button>

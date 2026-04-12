@@ -6,9 +6,14 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, File, UploadFile
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
+from sqlalchemy.dialects.postgresql import insert
+import pandas as pd
+import io
+import fitz  # PyMuPDF
+import docx
 
 from app.core.deps import CurrentUser, DBSession, TenantID
 from app.models.test import MedicalTest, TestCategory
@@ -23,6 +28,115 @@ from app.schemas.schemas import (
 )
 
 router = APIRouter(prefix="/tests", tags=["Tests & Services"])
+
+def _parse_file(file_content: bytes, filename: str) -> pd.DataFrame:
+    df = pd.DataFrame()
+    ext = filename.lower().split('.')[-1]
+    
+    try:
+        if ext == 'csv':
+            df = pd.read_csv(io.BytesIO(file_content))
+        elif ext in ['xls', 'xlsx']:
+            df = pd.read_excel(io.BytesIO(file_content))
+        elif ext == 'docx':
+            doc = docx.Document(io.BytesIO(file_content))
+            data = []
+            if doc.tables:
+                table = doc.tables[0]
+                keys = None
+                for i, row in enumerate(table.rows):
+                    text = [cell.text.strip() for cell in row.cells]
+                    if i == 0:
+                        keys = text
+                        continue
+                    data.append(dict(zip(keys, text)))
+                df = pd.DataFrame(data)
+        elif ext == 'pdf':
+            doc = fitz.open(stream=file_content, filetype="pdf")
+            all_text = ""
+            for page in doc:
+                all_text += page.get_text("text") + "\n"
+            
+            # Very basic whitespace/csv parsing fallback for raw PDF text
+            lines = [line.strip() for line in all_text.split('\n') if line.strip()]
+            data = [line.split(',') for line in lines if ',' in line]
+            if len(data) > 1:
+                df = pd.DataFrame(data[1:], columns=data[0])
+    except Exception as e:
+        raise ValueError(f"Failed to parse {ext} file: {str(e)}")
+        
+    return df
+
+@router.post("/bulk-upload", status_code=status.HTTP_201_CREATED, summary="Bulk import tests")
+async def bulk_upload_tests(
+    db: DBSession,
+    tenant_id: TenantID,
+    current_user: CurrentUser,
+    file: UploadFile = File(...)
+):
+    content = await file.read()
+    try:
+        df = _parse_file(content, file.filename)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    if df.empty:
+        raise HTTPException(status_code=400, detail="Parsed file contains no data or could not be read properly.")
+    
+    # Standardize columns
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    
+    # Needs: name, code, price. Category is optional
+    if not all(col in df.columns for col in ['name', 'price']):
+        raise HTTPException(status_code=400, detail="File must minimally contain 'name' and 'price' columns.")
+        
+    records_added = 0
+    categories_cache = {}
+    
+    # Fetch existing categories to avoid duplicates
+    existing_cats = await db.execute(select(TestCategory).where(TestCategory.tenant_id == tenant_id))
+    for cat in existing_cats.scalars():
+        categories_cache[cat.name.lower()] = cat.id
+
+    for _, row in df.iterrows():
+        name = str(row.get('name', '')).strip()
+        if not name:
+            continue
+            
+        code = str(row.get('code', '')).strip()
+        cat_name = str(row.get('category', '')).strip()
+        price_raw = str(row.get('price', '0')).replace(',', '').replace('₹', '').replace('$', '').strip()
+        
+        try:
+            price = float(price_raw)
+        except:
+            price = 0.0
+            
+        cat_id = None
+        if cat_name:
+            if cat_name.lower() in categories_cache:
+                cat_id = categories_cache[cat_name.lower()]
+            else:
+                new_cat = TestCategory(tenant_id=tenant_id, name=cat_name, description="Auto-imported")
+                db.add(new_cat)
+                await db.flush()
+                categories_cache[cat_name.lower()] = new_cat.id
+                cat_id = new_cat.id
+                
+        # Upsert Test
+        test = MedicalTest(
+            tenant_id=tenant_id,
+            name=name,
+            code=code if code and code.lower() != 'nan' else f"TST-{abs(hash(name)) % 10000}",
+            category_id=cat_id,
+            price=price,
+            description="Imported in bulk"
+        )
+        db.add(test)
+        records_added += 1
+        
+    await db.commit()
+    return {"message": f"Successfully imported {records_added} records."}
 
 
 # ── Test Categories ───────────────────────────────────────────
