@@ -599,64 +599,139 @@ export default function BillingPage() {
             </div>
 
             {/* Print Only Layout */}
-            <div className="print-only bg-white text-black p-8 text-xs font-serif leading-tight">
-               <div className="border-b-2 border-black pb-4 mb-4 text-center">
-                  <h1 className="text-2xl font-bold font-sans uppercase">{clinicProfile?.name || 'Hospital Billing'}</h1>
-                  <p className="mt-1">Reg. No. {clinicProfile?.registration_number || '----------'}</p>
-                  <p>{clinicProfile?.address || ''}</p>
-                  <p>Ph: {clinicProfile?.phone || '----------'}</p>
-               </div>
-               
-               <div className="flex justify-between border-b-2 border-black pb-4 mb-4">
-                  <div className="space-y-1">
-                     <p><b>Patient ID:</b> {selectedBill.patient?.id?.slice(0,8).toUpperCase()}</p>
-                     <p><b>Name:</b> {selectedBill.patient?.name} {selectedBill.patient?.gender ? `(${selectedBill.patient.gender})` : ''}</p>
-                     <p><b>Age:</b> {selectedBill.patient?.age} years</p>
-                     <p className="mt-2"><b>Payer Details</b></p>
-                     <p><b>Name:</b> {selectedBill.patient?.name}</p>
-                     <p className="mt-2"><b>Consulting Doctors:</b></p>
-                     <p>- {selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'General Physician'}</p>
-                  </div>
-                  <div className="space-y-1 text-right">
-                     <p><b>Date:</b> {new Date(selectedBill.created_at).toLocaleDateString()}</p>
-                     <p><b>Admission No:</b> BILL-{selectedBill.bill_number}</p>
-                     <p><b>Admission Date:</b> {new Date(selectedBill.created_at).toLocaleDateString()}</p>
-                     <p><b>Discharge Date:</b> -- / -- / --</p>
-                     <p><b>Bed No(s):</b> OP (Outpatient)</p>
-                  </div>
-               </div>
+            <div className="print-only bg-white text-black p-0 h-full w-full font-sans leading-tight relative">
+               <style>{`
+                 @media print {
+                    @page { margin: 0; }
+                    body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                 }
+               `}</style>
 
-               <h2 className="text-center font-bold text-lg mb-4 underline">PROVISIONAL BILL</h2>
-               
-               <table className="w-full text-left border-collapse mb-6">
-                 <thead>
-                   <tr className="border-y-2 border-black">
-                     <th className="py-1">Primary Code</th>
-                     <th className="py-1">Particulars</th>
-                     <th className="py-1 text-right">Amount</th>
-                   </tr>
-                 </thead>
-                 <tbody className="border-b-2 border-black">
-                   {selectedBill.items?.map((item, i) => (
-                     <tr key={i}>
-                       <td className="py-1">{item.medical_test_id ? item.medical_test_id.slice(0,6).toUpperCase() : `M-${i+100}`}</td>
-                       <td className="py-1">{item.description}</td>
-                       <td className="py-1 text-right">{Number(item.total).toFixed(2)}</td>
+               {/* Top blue strip */}
+               <div className="w-full h-12 bg-[#7bb0db] mb-8" />
+
+               <div className="px-8 xs:px-12">
+                 {/* Header Section */}
+                 <div className="flex justify-between items-start mb-8">
+                    {/* Left: Logo & Address */}
+                    <div className="space-y-2">
+                       {clinicProfile?.logo_url ? (
+                          <img src={clinicProfile.logo_url} alt="Logo" className="h-24 w-auto object-contain p-1 border border-black mb-4" />
+                       ) : (
+                          <div className="w-32 h-32 bg-[#e6eff6] border border-black flex items-center justify-center text-center font-bold text-lg mb-4">
+                             YOUR<br/>LOGO
+                          </div>
+                       )}
+                       <p className="text-sm font-semibold">[ {clinicProfile?.name || 'Medical Institution Name'} ]</p>
+                       <p className="text-xs text-gray-600">[ {clinicProfile?.address || 'Medical Institution Address'} ]</p>
+                       <p className="text-xs text-gray-600">[ {clinicProfile?.email || 'Medical Institution Email'} ]</p>
+                       <p className="text-xs text-gray-600">[ {clinicProfile?.phone || 'Medical Institution Contact No.'} ]</p>
+                    </div>
+
+                    {/* Right: Receipt Heading & Info */}
+                    <div className="text-right flex flex-col items-end">
+                       <h1 className="text-4xl text-gray-400 mb-6 font-bold tracking-widest">RECEIPT</h1>
+                       
+                       <div className="w-48 text-left space-y-4">
+                          <div>
+                            <p className="text-[#103463] text-xs font-bold mb-1">DATE</p>
+                            <p className="border-b border-gray-300 pb-1 text-sm">{new Date(selectedBill.created_at).toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-[#103463] text-xs font-bold mb-1">RECEIPT NO.</p>
+                            <p className="border-b border-gray-300 pb-1 text-sm">{selectedBill.bill_number}</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Patient & Practitioner Details */}
+                 <div className="grid grid-cols-2 gap-16 mb-6">
+                    <div>
+                       <h3 className="text-[#103463] text-sm font-bold border-b border-[#103463] pb-1 mb-2">Patient Information</h3>
+                       <div className="space-y-1 text-sm">
+                          <p>[ {selectedBill.patient?.name || 'Customer Name'} ]</p>
+                          <p>[ {selectedBill.patient?.address || 'Customer Address'} ]</p>
+                          <p>[ {selectedBill.patient?.email || 'Customer Email'} ]</p>
+                          <p>[ {selectedBill.patient?.phone || 'Customer Contact No.'} ]</p>
+                       </div>
+                    </div>
+                    <div>
+                       <h3 className="text-[#103463] text-sm font-bold border-b border-[#103463] pb-1 mb-2">Practitioner Information</h3>
+                       <div className="space-y-1 text-sm">
+                          <p>[ {selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'Practitioner Name'} ]</p>
+                          <p>[ {selectedBill.doctor?.id?.slice(0,8).toUpperCase() || 'Practitioner License'} ]</p>
+                          <p>[ {selectedBill.doctor?.specialization || 'Practitioner Title'} ]</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Data Table */}
+                 <table className="w-full text-sm border border-gray-300 mb-8 border-collapse">
+                   <thead>
+                     <tr className="bg-[#103463] text-white">
+                       <th className="p-2 border-r border-white border-opacity-30 font-semibold w-1/6">Code</th>
+                       <th className="p-2 border-r border-white border-opacity-30 font-semibold text-left">Description of Service/Treatment/Medicine</th>
+                       <th className="p-2 border-r border-white border-opacity-30 font-semibold w-1/5">Rate / Charge</th>
+                       <th className="p-2 font-semibold w-1/5">Line total</th>
                      </tr>
-                   ))}
-                 </tbody>
-               </table>
+                   </thead>
+                   <tbody>
+                     {[...selectedBill.items, ...Array(Math.max(0, 5 - selectedBill.items.length)).fill({})].map((item, i) => (
+                       <tr key={i} className="even:bg-[#f2f2f2] text-center border-b border-gray-300 h-8">
+                         <td className="p-2 border-r border-gray-300 text-xs text-gray-500">{item.medical_test_id?.slice(0,6).toUpperCase() || (item.description ? `CST-${i+1}` : '')}</td>
+                         <td className="p-2 border-r border-gray-300 text-left">{item.description || ''}</td>
+                         <td className="p-2 border-r border-gray-300">{item.unit_price ? Number(item.unit_price).toFixed(2) : ''}</td>
+                         <td className="p-2">{item.total ? Number(item.total).toFixed(2) : ''}</td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
 
-               <div className="text-right space-y-1 border-b-2 border-black pb-4 mb-4 font-bold">
-                 <p>Total Bill Amount: {Number(selectedBill.subtotal).toFixed(2)}</p>
-                 {Number(selectedBill.discount_amount) > 0 && <p>Discount: -{Number(selectedBill.discount_amount).toFixed(2)}</p>}
-                 {Number(selectedBill.tax_amount) > 0 && <p>GST: {Number(selectedBill.tax_amount).toFixed(2)}</p>}
-                 <p>Amount Payable: {Number(selectedBill.total).toFixed(2)}</p>
-                 <p>Amount Paid: 0.00</p>
-                 <p>Balance: {Number(selectedBill.total).toFixed(2)}</p>
-                 <p className="pt-2 text-sm italic">Paid amount in words : Zero</p>
+                 {/* Footer block */}
+                 <div className="flex justify-between">
+                    {/* Notes & Payment */}
+                    <div className="text-sm">
+                       <p className="mb-6 border-b border-gray-400 w-48">Notes</p>
+                       <p className="pl-4 mb-2">Payment by:</p>
+                       <ul className="space-y-1">
+                         <li>• Cash {selectedBill.payment_mode === 'cash' ? '( ✓ )' : ''}</li>
+                         <li>• Cheque with number <span className="border-b border-[#103463] inline-block w-24"></span></li>
+                         <li>• Credit card {selectedBill.payment_mode === 'card' ? '( ✓ )' : ''}</li>
+                         <li>• Insurance [ {selectedBill.payment_mode === 'insurance' ? '✓' : '      '} ]</li>
+                         <li>• Others <span className="border-b border-[#103463] inline-block w-24">{['upi','online'].includes(selectedBill.payment_mode) ? selectedBill.payment_mode.toUpperCase() : ''}</span></li>
+                       </ul>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="w-80">
+                       <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-xs font-bold uppercase tracking-wide text-right items-end mb-4 pr-1">
+                          <div className="text-[#103463]">Subtotal</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.subtotal || 0).toFixed(2)}</div>
+                          
+                          <div className="text-[#103463]">Discount</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.discount_amount || 0).toFixed(2)}</div>
+                          
+                          <div className="text-[#103463]">Subtotal Less Discount</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{(Number(selectedBill.subtotal) - Number(selectedBill.discount_amount)).toFixed(2)}</div>
+                          
+                          <div className="text-[#103463]">Tax Rate</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{selectedBill.tax_percent || 0}%</div>
+                          
+                          <div className="text-[#103463]">Total Tax</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.tax_amount || 0).toFixed(2)}</div>
+                       </div>
+
+                       <div className="mt-8 bg-[#cccccc] p-3 border border-black flex justify-between items-center text-lg font-bold shadow-sm">
+                          <span>Balance Due <span className="font-sans">₹</span></span>
+                          <span className="font-sans">{selectedBill.status === 'paid' ? '0.00' : Number(selectedBill.total || 0).toFixed(2)}</span>
+                       </div>
+                    </div>
+                 </div>
                </div>
-               <p className="text-center text-[10px] mt-8 text-gray-500">Auto-generated via System</p>
+
+               {/* Bottom Blue Strip (Print absolute bottom) */}
+               <div className="fixed bottom-0 left-0 w-full h-12 bg-[#7bb0db]" />
             </div>
           </div>
         )}
