@@ -85,6 +85,7 @@ async def create_user(
         full_name=data.full_name,
         phone=data.phone,
         role=data.role,
+        is_approved=True,  # Staff created by an admin are auto-approved
     )
     db.add(user)
     await db.commit()

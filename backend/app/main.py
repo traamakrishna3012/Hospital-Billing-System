@@ -91,6 +91,17 @@ async def lifespan(app: FastAPI):
                 await db.rollback()
                 logger.warning(f"Migration (tenants.logo_url) skipped: {e}")
 
+            # 6. Manual Migration - Users: Auto-approve existing staff/doctors
+            # Only users who are ALREADY part of a tenant and are not the primary admin
+            # should be auto-approved if they are currently stuck.
+            try:
+                await db.execute(text("UPDATE users SET is_approved = true WHERE tenant_id IS NOT NULL AND role IN ('staff', 'doctor') AND is_approved = false"))
+                await db.commit()
+                logger.info("Migration: existing staff users auto-approved")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (staff auto-approval) skipped: {e}")
+
             # 3. Seed SuperAdmin
             result = await db.execute(
                 select(User).where(User.email == "superadmin@hospitalbilling.com")
