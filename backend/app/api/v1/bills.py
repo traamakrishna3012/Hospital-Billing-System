@@ -238,10 +238,12 @@ async def download_bill_pdf(
         "currency": tenant.currency,
     }
     patient_data = {
-        "name": bill.patient.name if bill.patient else "N/A",
-        "phone": bill.patient.phone if bill.patient else "N/A",
-        "age": bill.patient.age if bill.patient else "N/A",
-        "gender": bill.patient.gender if bill.patient else "N/A",
+        "name":    bill.patient.name    if bill.patient else "N/A",
+        "phone":   bill.patient.phone   if bill.patient else "N/A",
+        "email":   bill.patient.email   if bill.patient else None,
+        "address": bill.patient.address if bill.patient else None,
+        "age":     bill.patient.age     if bill.patient else "N/A",
+        "gender":  bill.patient.gender  if bill.patient else "N/A",
     }
     doctor_data = None
     if bill.doctor:
@@ -337,10 +339,12 @@ async def email_bill_receipt(
         "currency": tenant.currency,
     }
     patient_data = {
-        "name": bill.patient.name,
-        "phone": bill.patient.phone,
-        "age": bill.patient.age,
-        "gender": bill.patient.gender,
+        "name":    bill.patient.name,
+        "phone":   bill.patient.phone,
+        "email":   bill.patient.email,
+        "address": bill.patient.address,
+        "age":     bill.patient.age,
+        "gender":  bill.patient.gender,
     }
     doctor_data = None
     if bill.doctor:
@@ -351,6 +355,7 @@ async def email_bill_receipt(
     items_data = [
         {
             "description": item.description,
+            "code": item.code or "",
             "quantity": item.quantity,
             "unit_price": float(item.unit_price),
             "total": float(item.total),
