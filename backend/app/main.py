@@ -73,6 +73,15 @@ async def lifespan(app: FastAPI):
                 await db.rollback()
                 logger.warning(f"Migration (bill_items.code) skipped: {e}")
 
+            # 4. Manual Migration - Users: modules JSONB column
+            try:
+                await db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS modules JSONB"))
+                await db.commit()
+                logger.info("Migration: users.modules column added")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (users.modules) skipped: {e}")
+
             # 3. Seed SuperAdmin
             result = await db.execute(
                 select(User).where(User.email == "superadmin@hospitalbilling.com")

@@ -6,7 +6,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, Boolean, Index
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -39,6 +39,9 @@ class User(Base):
     )  # superadmin | admin | staff
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+    # ── Module Access (per-staff override; NULL = inherit tenant modules) ─
+    modules: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=None)
 
     # ── Relationships ─────────────────────────────────────────
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="users")

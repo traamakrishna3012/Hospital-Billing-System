@@ -64,7 +64,8 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     is_approved: bool = False
-    tenant_modules: Optional[dict] = None
+    modules: Optional[dict] = None          # per-user module overrides
+    tenant_modules: Optional[dict] = None   # computed — used by Sidebar
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -84,6 +85,7 @@ class UserUpdateRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     role: Optional[str] = Field(None, pattern="^(admin|staff|doctor)$")
     is_active: Optional[bool] = None
+    modules: Optional[dict] = None   # per-staff module access control
 
 
 # ═══════════════════════════════════════════════════════════════

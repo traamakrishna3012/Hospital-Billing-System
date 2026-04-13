@@ -68,14 +68,21 @@ export default function Sidebar() {
     </NavLink>
   ));
 
+  // Effective module access:
+  // 1. If user has their own modules set → use those
+  // 2. Otherwise fall through to tenant-level modules
+  const effectiveModules = user?.modules ?? user?.tenant_modules;
+
   const filteredNavItems = navItems.filter(item => {
-    if (['dashboard'].includes(item.id)) return true;
-    return user?.tenant_modules?.[item.id] !== false;
+    if (item.id === 'dashboard') return true;           // always visible
+    if (isAdmin()) return true;                          // admins see all
+    if (effectiveModules == null) return true;           // no restrictions set
+    return effectiveModules[item.id] !== false;
   });
 
   const filteredAdminItems = adminItems.filter(item => {
-    if (item.id === 'settings') return true;
-    return user?.tenant_modules?.[item.id] !== false;
+    if (item.id === 'settings') return true;             // always visible to admin
+    return true;                                         // admin nav already gated by isAdmin()
   });
 
   return (
