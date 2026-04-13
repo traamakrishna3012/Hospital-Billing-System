@@ -81,7 +81,7 @@ export default function BillingPage() {
       setTests(tRes.data.items);
       setBillForm({
         patient_id: '', doctor_id: '', include_doctor_fee: false,
-        items: [{ description: '', unit_price: '', quantity: 1, medical_test_id: '' }],
+        items: [{ description: '', unit_price: '', quantity: 1, medical_test_id: '', code: '' }],
         tax_percent: '0', discount_type: 'percent', discount_value: '0', payment_mode: 'cash', status: 'paid', notes: '',
       });
       setPatientSearch('');
@@ -95,7 +95,7 @@ export default function BillingPage() {
   const addItem = () => {
     setBillForm({
       ...billForm,
-      items: [...billForm.items, { description: '', unit_price: '', quantity: 1, medical_test_id: '' }],
+      items: [...billForm.items, { description: '', unit_price: '', quantity: 1, medical_test_id: '', code: '' }],
     });
   };
 
@@ -126,6 +126,7 @@ export default function BillingPage() {
       if (test) {
         newItems[index].description = test.name;
         newItems[index].unit_price = String(test.price);
+        newItems[index].code = test.code || '';  // carry the test code
       }
     }
     setBillForm({ ...billForm, items: newItems });
@@ -158,6 +159,7 @@ export default function BillingPage() {
       doctor_id: billForm.doctor_id,
       items: billForm.items.map((item) => ({
         description: item.description,
+        code: item.code || null,
         unit_price: parseFloat(item.unit_price),
         quantity: parseInt(item.quantity),
         medical_test_id: item.medical_test_id || null,
@@ -683,7 +685,7 @@ export default function BillingPage() {
                    <tbody>
                      {[...selectedBill.items, ...Array(Math.max(0, 5 - selectedBill.items.length)).fill({})].map((item, i) => (
                        <tr key={i} className="even:bg-[#f2f2f2] text-center border-b border-gray-300 h-8">
-                         <td className="p-2 border-r border-gray-300 text-xs text-gray-500">{item.medical_test_id?.slice(0,6).toUpperCase() || (item.description ? `CST-${i+1}` : '')}</td>
+                         <td className="p-2 border-r border-gray-300 text-xs text-gray-500">{item.code || (item.description ? `CST-${i+1}` : '')}</td>
                          <td className="p-2 border-r border-gray-300 text-left">{item.description || ''}</td>
                          <td className="p-2 border-r border-gray-300">{item.unit_price ? `Rs. ${Number(item.unit_price).toFixed(2)}` : ''}</td>
                          <td className="p-2">{item.total ? `Rs. ${Number(item.total).toFixed(2)}` : ''}</td>

@@ -12,6 +12,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.bill import Bill, BillItem
+from app.models.test import MedicalTest
 from app.models.tenant import Tenant
 from app.schemas.schemas import BillCreate
 
@@ -105,9 +106,21 @@ async def create_bill(
     # Create bill items
     for item_data in data.items:
         item_total = round(item_data.unit_price * item_data.quantity, 2)
+
+        # Resolve code: use provided code first, then look up from the test
+        item_code = item_data.code or None
+        if not item_code and item_data.medical_test_id:
+            test_result = await db.execute(
+                select(MedicalTest).where(MedicalTest.id == item_data.medical_test_id)
+            )
+            test = test_result.scalar_one_or_none()
+            if test:
+                item_code = test.code
+
         bill_item = BillItem(
             bill_id=bill.id,
             medical_test_id=item_data.medical_test_id,
+            code=item_code,
             description=item_data.description,
             quantity=item_data.quantity,
             unit_price=float(item_data.unit_price),

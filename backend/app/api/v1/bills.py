@@ -252,6 +252,7 @@ async def download_bill_pdf(
     items_data = [
         {
             "description": item.description,
+            "code": item.code or "",
             "quantity": item.quantity,
             "unit_price": float(item.unit_price),
             "total": float(item.total),

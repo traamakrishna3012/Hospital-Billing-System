@@ -93,6 +93,7 @@ class BillItem(Base):
 
     # ── Item Details ──────────────────────────────────────────
     description: Mapped[str] = mapped_column(String(500), nullable=False)
+    code: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # copied from MedicalTest.code
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)

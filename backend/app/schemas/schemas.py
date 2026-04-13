@@ -278,6 +278,7 @@ class MedicalTestResponse(BaseModel):
 
 class BillItemCreate(BaseModel):
     medical_test_id: Optional[UUID] = None
+    code: Optional[str] = None          # test code — sent from frontend, stored on item
     description: str = Field(..., min_length=1, max_length=500)
     quantity: int = Field(default=1, ge=1)
     unit_price: float = Field(..., ge=0)
@@ -287,6 +288,7 @@ class BillItemResponse(BaseModel):
     id: UUID
     bill_id: UUID
     medical_test_id: Optional[UUID] = None
+    code: Optional[str] = None
     description: str
     quantity: int
     unit_price: float

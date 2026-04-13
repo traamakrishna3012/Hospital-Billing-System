@@ -64,6 +64,15 @@ async def lifespan(app: FastAPI):
                 await db.rollback()
                 logger.warning(f"Migration (tenants table) skipped: {e}")
 
+            # 3. Manual Migration - BillItems: code column
+            try:
+                await db.execute(text("ALTER TABLE bill_items ADD COLUMN IF NOT EXISTS code VARCHAR(50)"))
+                await db.commit()
+                logger.info("Migration: bill_items.code column added")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (bill_items.code) skipped: {e}")
+
             # 3. Seed SuperAdmin
             result = await db.execute(
                 select(User).where(User.email == "superadmin@hospitalbilling.com")

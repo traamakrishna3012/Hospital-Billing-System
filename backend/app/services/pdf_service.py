@@ -270,7 +270,8 @@ def generate_receipt_pdf(
     for i in range(BLANK_ROWS):
         if i < len(items_data):
             it   = items_data[i]
-            code = str(it.get("medical_test_id") or f"CST-{i+1:03d}")[:6].upper()
+            # Use stored code directly; fall back to CST-### if none
+            code = it.get("code") or f"CST-{i + 1:03d}"
             svc_data.append([
                 Paragraph(code,                                          tbc),
                 Paragraph(it.get("description", ""),                    tbl_l),
