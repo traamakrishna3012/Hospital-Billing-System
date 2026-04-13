@@ -16,11 +16,12 @@ from datetime import datetime
 from io import BytesIO
 from typing import Optional
 
-from reportlab.lib import colors
+from reportlab.lib import colors, utils
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame,
     Table, TableStyle, Paragraph, Spacer, Image, HRFlowable, KeepTogether,
@@ -86,7 +87,9 @@ def _load_logo(logo_url: Optional[str], w=18 * mm, h=18 * mm) -> Optional[Image]
             header, b64data = logo_url.split(",", 1)
             raw = base64.b64decode(b64data)
             buf = BytesIO(raw)
-            return Image(buf, width=w, height=h)
+            # Use ImageReader for robust format detection from buffer
+            img_reader = ImageReader(buf)
+            return Image(img_reader, width=w, height=h)
         except Exception:
             return None
 

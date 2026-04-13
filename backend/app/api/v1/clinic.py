@@ -21,7 +21,7 @@ from app.schemas.schemas import TenantResponse, TenantUpdateRequest
 settings = get_settings()
 router = APIRouter(prefix="/clinic", tags=["Clinic Settings"])
 
-ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"}
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
 
 
 @router.get("", response_model=TenantResponse, summary="Get clinic profile")
