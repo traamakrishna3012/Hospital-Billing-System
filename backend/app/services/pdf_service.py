@@ -3,16 +3,14 @@ PDF receipt generation — matches Medical Receipt Template (Style 1).
 Uses ReportLab with BaseDocTemplate + Frame for accurate band rendering.
 
 Key design decisions:
-- ₹ symbol: Rendered as "Rs." because ReportLab built-in fonts (Helvetica/Times)
-  do not include the Indian Rupee Unicode glyph (U+20B9). This avoids the
-  rectangular substitution box seen in the output.
-- Logo: Loaded from the UPLOAD_DIR on disk (logo_url stored as a relative
-  path like "uploads/logos/<tenant_id>/logo.png").
+- Rs. currency: ReportLab built-in fonts cannot render the ₹ Unicode glyph (U+20B9).
+- Logo: Stored as a base64 data-URL in the DB (no file-system dependency).
 - No square brackets around data values.
 """
 
 from __future__ import annotations
 
+import base64
 import os
 from datetime import datetime
 from io import BytesIO
@@ -74,32 +72,43 @@ def _rs(amount: float) -> str:
 # ── Logo loader ───────────────────────────────────────────────────────────
 def _load_logo(logo_url: Optional[str], w=18 * mm, h=18 * mm) -> Optional[Image]:
     """
-    Try to load the clinic logo.
-    logo_url is stored as a *relative* path like
-    "uploads/logos/<uuid>/logo.png" relative to the UPLOAD_DIR parent.
+    Load the clinic logo from either:
+    - A base64 data-URL (data:image/png;base64,...) — stored in DB
+    - An absolute filesystem path
+    - A relative path from UPLOAD_DIR or CWD
     """
     if not logo_url:
         return None
-    # Resolve: if already absolute and exists, use directly
+
+    # ── 1. Base64 data-URL (preferred — no filesystem needed)
+    if logo_url.startswith("data:"):
+        try:
+            header, b64data = logo_url.split(",", 1)
+            raw = base64.b64decode(b64data)
+            buf = BytesIO(raw)
+            return Image(buf, width=w, height=h)
+        except Exception:
+            return None
+
+    # ── 2. Absolute path on disk
     if os.path.isabs(logo_url) and os.path.exists(logo_url):
         try:
             return Image(logo_url, width=w, height=h)
         except Exception:
             return None
-    # Relative path — join with parent of UPLOAD_DIR (project root)
-    base = os.path.dirname(os.path.abspath(settings.UPLOAD_DIR))
-    candidate = os.path.join(base, logo_url)
-    if os.path.exists(candidate):
-        try:
-            return Image(candidate, width=w, height=h)
-        except Exception:
-            return None
-    # Also try relative to current working directory
-    if os.path.exists(logo_url):
-        try:
-            return Image(logo_url, width=w, height=h)
-        except Exception:
-            return None
+
+    # ── 3. Relative path — try several roots
+    for base_dir in [
+        os.path.dirname(os.path.abspath(settings.UPLOAD_DIR)),
+        os.getcwd(),
+    ]:
+        candidate = os.path.join(base_dir, logo_url)
+        if os.path.exists(candidate):
+            try:
+                return Image(candidate, width=w, height=h)
+            except Exception:
+                return None
+
     return None
 
 

@@ -1,11 +1,13 @@
 """
 Clinic settings routes — profile, logo, subscription.
+
+Logo is stored as a base64 data-URL directly in tenant.logo_url.
+This avoids ephemeral-filesystem loss on Render / serverless platforms.
 """
 
 from __future__ import annotations
 
-import os
-import shutil
+import base64
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, status
@@ -67,7 +69,12 @@ async def upload_logo(
     current_user: CurrentUser,
     file: UploadFile = File(...),
 ):
-    """Upload or replace the clinic logo. Admin only."""
+    """Upload or replace the clinic logo. Admin only.
+    
+    The image is converted to a base64 data-URL and stored directly in the
+    database. This means the logo is permanent — no file-system dependency
+    that would be wiped on a serverless/Render restart.
+    """
     if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
@@ -78,7 +85,7 @@ async def upload_logo(
             detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}",
         )
 
-    # Validate file size
+    # Read and validate size
     content = await file.read()
     if len(content) > settings.max_upload_bytes:
         raise HTTPException(
@@ -86,23 +93,15 @@ async def upload_logo(
             detail=f"File too large. Max size: {settings.MAX_UPLOAD_SIZE_MB}MB",
         )
 
-    # Save file
-    ext = (file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "png").lower()
-    logo_dir = os.path.join(settings.UPLOAD_DIR, "logos", str(tenant_id))
-    os.makedirs(logo_dir, exist_ok=True)
-    logo_filename = f"logo.{ext}"
-    logo_path = os.path.join(logo_dir, logo_filename)
-
-    with open(logo_path, "wb") as f:
-        f.write(content)
-
-    # Store as a public URL path (served via /uploads static mount)
-    public_logo_url = f"uploads/logos/{tenant_id}/{logo_filename}"
+    # Encode to base64 data-URL — stored directly in DB, zero file-system dependency
+    b64 = base64.b64encode(content).decode("utf-8")
+    mime = file.content_type or "image/png"
+    data_url = f"data:{mime};base64,{b64}"
 
     # Update tenant
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one()
-    tenant.logo_url = public_logo_url
+    tenant.logo_url = data_url
     await db.commit()
     await db.refresh(tenant)
 

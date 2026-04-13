@@ -78,8 +78,8 @@ export default function SettingsPage() {
           <div className="w-24 h-24 rounded-2xl bg-surface-100 border-2 border-dashed border-surface-300 flex items-center justify-center overflow-hidden">
             {clinic?.logo_url ? (
               <img 
-                src={`${(import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000/api/v1' : 'https://hospital-billing-system-pccq.onrender.com/api/v1')).replace('/api/v1', '')}/${clinic.logo_url}`} 
-                alt="Logo" 
+                src={clinic.logo_url} 
+                alt="Clinic Logo" 
                 className="w-full h-full object-cover" 
               />
             ) : (

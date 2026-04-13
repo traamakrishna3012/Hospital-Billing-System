@@ -93,7 +93,7 @@ export const billAPI = {
   create: (data) => api.post('/bills', data),
   update: (id, data) => api.put(`/bills/${id}`, data),
   delete: (id) => api.delete(`/bills/${id}`),
-  downloadPDF: (id) => api.get(`/bills/${id}/pdf`, { responseType: 'blob' }),
+  downloadPDF: (id) => api.get(`/bills/${id}/pdf`, { responseType: 'arraybuffer' }),
   sendEmail: (id) => api.post(`/bills/${id}/send-email`),
 };
 

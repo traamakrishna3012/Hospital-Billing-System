@@ -205,9 +205,11 @@ export default function BillingPage() {
 
   const downloadPDF = async (id) => {
     try {
+      // Use arraybuffer to guarantee binary-safe transfer (blob can mangle encoding on some browsers)
       const response = await billAPI.downloadPDF(id);
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      saveAs(blob, `receipt-${selectedBill?.bill_number || id}.pdf`);
+      const billNum = selectedBill?.bill_number || id;
+      saveAs(blob, `receipt-${billNum}.pdf`);
       toast.success('PDF downloaded');
     } catch (err) {
       toast.error('Failed to download PDF');
@@ -618,7 +620,7 @@ export default function BillingPage() {
                     <div className="space-y-2">
                        {clinicProfile?.logo_url ? (
                           <img
-                            src={`${(import.meta.env.VITE_API_BASE_URL || 'https://hospital-billing-system-pccq.onrender.com/api/v1').replace('/api/v1', '')}/${clinicProfile.logo_url}`}
+                            src={clinicProfile.logo_url}
                             alt="Logo"
                             className="h-20 w-auto object-contain mb-4"
                             onError={(e) => { e.target.style.display='none'; }}
