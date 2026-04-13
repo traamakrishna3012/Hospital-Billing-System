@@ -82,6 +82,15 @@ async def lifespan(app: FastAPI):
                 await db.rollback()
                 logger.warning(f"Migration (users.modules) skipped: {e}")
 
+            # 5. Manual Migration - Tenants: logo_url to TEXT
+            try:
+                await db.execute(text("ALTER TABLE tenants ALTER COLUMN logo_url TYPE TEXT"))
+                await db.commit()
+                logger.info("Migration: tenants.logo_url changed to TEXT")
+            except Exception as e:
+                await db.rollback()
+                logger.warning(f"Migration (tenants.logo_url) skipped: {e}")
+
             # 3. Seed SuperAdmin
             result = await db.execute(
                 select(User).where(User.email == "superadmin@hospitalbilling.com")

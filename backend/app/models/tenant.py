@@ -24,7 +24,7 @@ class Tenant(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=True)
 
     # ── Branding ──────────────────────────────────────────────
-    logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    logo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

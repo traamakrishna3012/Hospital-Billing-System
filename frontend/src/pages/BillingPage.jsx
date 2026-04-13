@@ -732,8 +732,8 @@ export default function BillingPage() {
                        </div>
 
                        <div className="mt-8 bg-[#cccccc] p-3 border border-black flex justify-between items-center text-lg font-bold shadow-sm">
-                          <span>Balance Due <span className="font-sans">₹</span></span>
-                          <span className="font-sans">{selectedBill.status === 'paid' ? '0.00' : Number(selectedBill.total || 0).toFixed(2)}</span>
+                          <span>Total Bill <span className="font-sans">Rs.</span></span>
+                          <span className="font-sans">{Number(selectedBill.total || 0).toFixed(2)}</span>
                        </div>
                     </div>
                  </div>
