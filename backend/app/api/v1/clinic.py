@@ -87,18 +87,22 @@ async def upload_logo(
         )
 
     # Save file
-    ext = file.filename.split(".")[-1] if file.filename else "png"
+    ext = (file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "png").lower()
     logo_dir = os.path.join(settings.UPLOAD_DIR, "logos", str(tenant_id))
     os.makedirs(logo_dir, exist_ok=True)
-    logo_path = os.path.join(logo_dir, f"logo.{ext}")
+    logo_filename = f"logo.{ext}"
+    logo_path = os.path.join(logo_dir, logo_filename)
 
     with open(logo_path, "wb") as f:
         f.write(content)
 
+    # Store as a public URL path (served via /uploads static mount)
+    public_logo_url = f"uploads/logos/{tenant_id}/{logo_filename}"
+
     # Update tenant
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one()
-    tenant.logo_url = logo_path
+    tenant.logo_url = public_logo_url
     await db.commit()
     await db.refresh(tenant)
 

@@ -212,8 +212,10 @@ export default function BillingPage() {
     }
   };
 
+  // "Print Bill" now downloads the same PDF as "Download PDF"
+  // so both buttons produce identical output (no browser print dialog discrepancies)
   const handlePrint = () => {
-    window.print();
+    if (selectedBill) downloadPDF(selectedBill.id);
   };
 
   const sendEmail = async (id) => {
@@ -613,16 +615,21 @@ export default function BillingPage() {
                     {/* Left: Logo & Address */}
                     <div className="space-y-2">
                        {clinicProfile?.logo_url ? (
-                          <img src={clinicProfile.logo_url} alt="Logo" className="h-24 w-auto object-contain p-1 border border-black mb-4" />
+                          <img
+                            src={`${(import.meta.env.VITE_API_BASE_URL || 'https://hospital-billing-system-pccq.onrender.com/api/v1').replace('/api/v1', '')}/${clinicProfile.logo_url}`}
+                            alt="Logo"
+                            className="h-20 w-auto object-contain mb-4"
+                            onError={(e) => { e.target.style.display='none'; }}
+                          />
                        ) : (
-                          <div className="w-32 h-32 bg-[#e6eff6] border border-black flex items-center justify-center text-center font-bold text-lg mb-4">
+                          <div className="w-28 h-20 bg-[#e6eff6] border border-gray-400 flex items-center justify-center text-center font-bold text-sm mb-4">
                              YOUR<br/>LOGO
                           </div>
                        )}
-                       <p className="text-sm font-semibold">[ {clinicProfile?.name || 'Medical Institution Name'} ]</p>
-                       <p className="text-xs text-gray-600">[ {clinicProfile?.address || 'Medical Institution Address'} ]</p>
-                       <p className="text-xs text-gray-600">[ {clinicProfile?.email || 'Medical Institution Email'} ]</p>
-                       <p className="text-xs text-gray-600">[ {clinicProfile?.phone || 'Medical Institution Contact No.'} ]</p>
+                       <p className="text-sm font-semibold">{clinicProfile?.name || 'Medical Institution Name'}</p>
+                       <p className="text-xs text-gray-600">{clinicProfile?.address || 'Medical Institution Address'}</p>
+                       <p className="text-xs text-gray-600">{clinicProfile?.email || 'Medical Institution Email'}</p>
+                       <p className="text-xs text-gray-600">{clinicProfile?.phone || 'Medical Institution Contact No.'}</p>
                     </div>
 
                     {/* Right: Receipt Heading & Info */}
@@ -647,18 +654,18 @@ export default function BillingPage() {
                     <div>
                        <h3 className="text-[#103463] text-sm font-bold border-b border-[#103463] pb-1 mb-2">Patient Information</h3>
                        <div className="space-y-1 text-sm">
-                          <p>[ {selectedBill.patient?.name || 'Customer Name'} ]</p>
-                          <p>[ {selectedBill.patient?.address || 'Customer Address'} ]</p>
-                          <p>[ {selectedBill.patient?.email || 'Customer Email'} ]</p>
-                          <p>[ {selectedBill.patient?.phone || 'Customer Contact No.'} ]</p>
+                          <p>{selectedBill.patient?.name || 'Customer Name'}</p>
+                          <p>{selectedBill.patient?.address || 'Customer Address'}</p>
+                          <p>{selectedBill.patient?.email || 'Customer Email'}</p>
+                          <p>{selectedBill.patient?.phone || 'Customer Contact No.'}</p>
                        </div>
                     </div>
                     <div>
                        <h3 className="text-[#103463] text-sm font-bold border-b border-[#103463] pb-1 mb-2">Practitioner Information</h3>
                        <div className="space-y-1 text-sm">
-                          <p>[ {selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'Practitioner Name'} ]</p>
-                          <p>[ {selectedBill.doctor?.id?.slice(0,8).toUpperCase() || 'Practitioner License'} ]</p>
-                          <p>[ {selectedBill.doctor?.specialization || 'Practitioner Title'} ]</p>
+                          <p>{selectedBill.doctor?.name ? `Dr. ${selectedBill.doctor.name}` : 'Practitioner Name'}</p>
+                          <p>{selectedBill.doctor?.license_number || selectedBill.doctor?.id?.slice(0,8).toUpperCase() || 'Practitioner License'}</p>
+                          <p>{selectedBill.doctor?.specialization || 'Practitioner Title'}</p>
                        </div>
                     </div>
                  </div>
@@ -678,8 +685,8 @@ export default function BillingPage() {
                        <tr key={i} className="even:bg-[#f2f2f2] text-center border-b border-gray-300 h-8">
                          <td className="p-2 border-r border-gray-300 text-xs text-gray-500">{item.medical_test_id?.slice(0,6).toUpperCase() || (item.description ? `CST-${i+1}` : '')}</td>
                          <td className="p-2 border-r border-gray-300 text-left">{item.description || ''}</td>
-                         <td className="p-2 border-r border-gray-300">{item.unit_price ? Number(item.unit_price).toFixed(2) : ''}</td>
-                         <td className="p-2">{item.total ? Number(item.total).toFixed(2) : ''}</td>
+                         <td className="p-2 border-r border-gray-300">{item.unit_price ? `Rs. ${Number(item.unit_price).toFixed(2)}` : ''}</td>
+                         <td className="p-2">{item.total ? `Rs. ${Number(item.total).toFixed(2)}` : ''}</td>
                        </tr>
                      ))}
                    </tbody>
@@ -689,14 +696,15 @@ export default function BillingPage() {
                  <div className="flex justify-between">
                     {/* Notes & Payment */}
                     <div className="text-sm">
-                       <p className="mb-6 border-b border-gray-400 w-48">Notes</p>
-                       <p className="pl-4 mb-2">Payment by:</p>
+                       <p className="font-bold mb-1">Notes</p>
+                       <p className="border-b border-gray-300 w-48 mb-4 pb-1 text-xs text-gray-500">{selectedBill.notes || '—'}</p>
+                       <p className="font-bold mb-2">Payment by:</p>
                        <ul className="space-y-1">
-                         <li>• Cash {selectedBill.payment_mode === 'cash' ? '( ✓ )' : ''}</li>
-                         <li>• Cheque with number <span className="border-b border-[#103463] inline-block w-24"></span></li>
-                         <li>• Credit card {selectedBill.payment_mode === 'card' ? '( ✓ )' : ''}</li>
-                         <li>• Insurance [ {selectedBill.payment_mode === 'insurance' ? '✓' : '      '} ]</li>
-                         <li>• Others <span className="border-b border-[#103463] inline-block w-24">{['upi','online'].includes(selectedBill.payment_mode) ? selectedBill.payment_mode.toUpperCase() : ''}</span></li>
+                         <li>{selectedBill.payment_mode === 'cash' ? '[X]' : '[ ]'} Cash</li>
+                         <li>{selectedBill.payment_mode === 'cheque' ? '[X]' : '[ ]'} Cheque  No: ______________</li>
+                         <li>{['card','credit card'].includes(selectedBill.payment_mode) ? '[X]' : '[ ]'} Credit Card</li>
+                         <li>{selectedBill.payment_mode === 'insurance' ? '[X]' : '[ ]'} Insurance  Carrier: ______________</li>
+                         <li>{['upi','online'].includes(selectedBill.payment_mode) ? '[X]' : '[ ]'} Others: {['upi','online'].includes(selectedBill.payment_mode) ? selectedBill.payment_mode.toUpperCase() : '______________'}</li>
                        </ul>
                     </div>
 
@@ -704,19 +712,19 @@ export default function BillingPage() {
                     <div className="w-80">
                        <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-xs font-bold uppercase tracking-wide text-right items-end mb-4 pr-1">
                           <div className="text-[#103463]">Subtotal</div>
-                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.subtotal || 0).toFixed(2)}</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">Rs. {Number(selectedBill.subtotal || 0).toFixed(2)}</div>
                           
                           <div className="text-[#103463]">Discount</div>
-                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.discount_amount || 0).toFixed(2)}</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">Rs. {Number(selectedBill.discount_amount || 0).toFixed(2)}</div>
                           
                           <div className="text-[#103463]">Subtotal Less Discount</div>
-                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{(Number(selectedBill.subtotal) - Number(selectedBill.discount_amount)).toFixed(2)}</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">Rs. {(Number(selectedBill.subtotal) - Number(selectedBill.discount_amount)).toFixed(2)}</div>
                           
                           <div className="text-[#103463]">Tax Rate</div>
                           <div className="border-b border-gray-400 min-w-24 pb-0.5">{selectedBill.tax_percent || 0}%</div>
                           
                           <div className="text-[#103463]">Total Tax</div>
-                          <div className="border-b border-gray-400 min-w-24 pb-0.5">{Number(selectedBill.tax_amount || 0).toFixed(2)}</div>
+                          <div className="border-b border-gray-400 min-w-24 pb-0.5">Rs. {Number(selectedBill.tax_amount || 0).toFixed(2)}</div>
                        </div>
 
                        <div className="mt-8 bg-[#cccccc] p-3 border border-black flex justify-between items-center text-lg font-bold shadow-sm">
