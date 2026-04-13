@@ -16,6 +16,7 @@ export default function TestsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [catModalOpen, setCatModalOpen] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', code: '', category_id: '' });
   const [catForm, setCatForm] = useState({ name: '', description: '' });
@@ -140,7 +141,7 @@ export default function TestsPage() {
             accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, .pdf, .docx" 
             className="hidden" 
           />
-          <button onClick={() => fileInputRef.current?.click()} className="btn-secondary flex items-center gap-2">
+          <button onClick={() => setBulkModalOpen(true)} className="btn-secondary flex items-center gap-2">
              <UploadCloud className="w-4 h-4" /> Bulk Upload
           </button>
           <button onClick={() => setCatModalOpen(true)} className="btn-secondary flex items-center gap-2">
@@ -233,8 +234,8 @@ export default function TestsPage() {
               <input type="number" required min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input-field" />
             </div>
             <div>
-              <label className="label-text">Code</label>
-              <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="input-field" placeholder="e.g., CBC001" />
+              <label className="label-text">Code *</label>
+              <input required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="input-field" placeholder="e.g., CBC001" />
             </div>
           </div>
           <div>
@@ -271,6 +272,67 @@ export default function TestsPage() {
             <button type="submit" className="btn-primary">Create Category</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Bulk Upload Modal */}
+      <Modal isOpen={bulkModalOpen} onClose={() => setBulkModalOpen(false)} title="Bulk Upload Tests & Services">
+        <div className="space-y-4">
+          <div className="bg-surface-50 p-4 rounded-xl border border-surface-100">
+            <h4 className="text-sm font-semibold text-surface-800 mb-2">Instructions</h4>
+            <ul className="text-xs text-surface-500 space-y-1 list-disc pl-4">
+              <li>Supported format: .csv, .xlsx, .xls</li>
+              <li>First row must be headers (column names)</li>
+              <li>Columns are case-insensitive</li>
+            </ul>
+          </div>
+
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left border-b border-surface-100">
+                <th className="pb-2">Column Name</th>
+                <th className="pb-2">Requirement</th>
+                <th className="pb-2">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100">
+              <tr>
+                <td className="py-2 font-mono font-bold">code</td>
+                <td className="py-2 text-red-500">Mandatory</td>
+                <td className="py-2">Unique ID (e.g., LP01)</td>
+              </tr>
+              <tr>
+                <td className="py-2 font-mono font-bold">name</td>
+                <td className="py-2 text-red-500">Mandatory</td>
+                <td className="py-2">Test Name</td>
+              </tr>
+              <tr>
+                <td className="py-2 font-mono font-bold">price</td>
+                <td className="py-2 text-red-500">Mandatory</td>
+                <td className="py-2">Base Charge amount</td>
+              </tr>
+              <tr>
+                <td className="py-2 font-mono font-bold">category</td>
+                <td className="py-2 text-surface-400">Optional</td>
+                <td className="py-2">Group name</td>
+              </tr>
+              <tr>
+                <td className="py-2 font-mono font-bold">description</td>
+                <td className="py-2 text-surface-400">Optional</td>
+                <td className="py-2">Additional details</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="pt-4 flex flex-col items-center justify-center border-2 border-dashed border-surface-200 rounded-xl p-8 hover:bg-surface-50/50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <UploadCloud className="w-8 h-8 text-primary-500 mb-2" />
+            <p className="text-sm text-surface-600">Click to select file</p>
+            <p className="text-xs text-surface-400 mt-1">Excel or CSV preferred</p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button onClick={() => setBulkModalOpen(false)} className="btn-secondary">Close</button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -87,8 +87,13 @@ async def bulk_upload_tests(
     df.columns = [str(c).strip().lower() for c in df.columns]
     
     # Needs: name, code, price. Category is optional
-    if not all(col in df.columns for col in ['name', 'price']):
-        raise HTTPException(status_code=400, detail="File must minimally contain 'name' and 'price' columns.")
+    required_cols = ['name', 'price', 'code']
+    if not all(col in df.columns for col in required_cols):
+        missing = [c for c in required_cols if c not in df.columns]
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File must contain 'name', 'price', and 'code' columns. Missing: {', '.join(missing)}"
+        )
         
     records_added = 0
     categories_cache = {}
@@ -123,11 +128,17 @@ async def bulk_upload_tests(
                 categories_cache[cat_name.lower()] = new_cat.id
                 cat_id = new_cat.id
                 
+        if not code:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Mandatory 'code' is missing for test: '{name}'. Please ensure every row has a unique test code."
+            )
+
         # Upsert Test
         test = MedicalTest(
             tenant_id=tenant_id,
             name=name,
-            code=code if code and code.lower() != 'nan' else f"TST-{abs(hash(name)) % 10000}",
+            code=code,
             category_id=cat_id,
             price=price,
             description="Imported in bulk"
